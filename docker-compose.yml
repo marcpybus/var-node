@@ -1,0 +1,25 @@
+services:
+  api:
+    build: .
+    image: marcpybus/balisa-marato:1.0
+    restart: always
+    volumes:
+      - ./api:/api
+      - ./data:/data
+    networks:
+      - internal
+  nginx:
+    build:
+      context: ./nginx
+    restart: always
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs
+    ports: 
+      - 80:80
+      - 443:443
+    networks:
+      - internal
+    depends_on:
+      - api
+networks:
+  internal:
