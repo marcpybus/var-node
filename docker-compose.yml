@@ -1,25 +1,57 @@
 services:
-  api:
-    build: .
-    image: marcpybus/balisa-marato:1.0
+  backend:
+    build: backend/.
     restart: always
     volumes:
-      - ./api:/api
+      - ./backend/flask:/flask-app
+      - ./network-config:/network-config
       - ./data:/data
     networks:
       - internal
+  beacon:
+    build: beacon/.
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: lamarato2019
+      MARIADB_DATABASE: balisadb
+    volumes:
+      - ./beacon:/flask-app
+    networks:
+      - internal
+  ingestion-tool:
+    build: ingestion-tool/.
+    environment:
+      MARIADB_ROOT_PASSWORD: lamarato2019
+      MARIADB_DATABASE: balisadb
+    networks:
+      - internal
+  mariadb:
+    image: mariadb:10.8-focal
+    restart: always
+    command: --max_allowed_packet=1073741824 --innodb_buffer_pool_chunk_size=128M --innodb_buffer_pool_size=16G --innodb_log_buffer_size=1G --innodb_log_file_size=4G --innodb_write_io_threads=15 --innodb_read_io_threads=15 --innodb_flush_log_at_trx_commit=0 --innodb_file_per_table=1 --innodb_flush_method=O_DIRECT --innodb_io_capacity=1000 --innodb_open_files=5000 --query_cache_type=ON --query_cache_size=16M --thread_pool_size=30 --thread_pool_idle_timeout=3600 --thread_handling=pool-of-threads --max_connections=500
+    networks:
+      - internal
+    environment:
+      MARIADB_ROOT_PASSWORD: lamarato2019
+      MARIADB_DATABASE: balisadb
+    volumes:
+      - ./mariadb-data:/var/lib/mysql
+      - ./schema-mariadb.sql:/docker-entrypoint-initdb.d/schema-mariadb.sql
   nginx:
-    build:
-      context: ./nginx
+    image: nginx:stable-alpine3.17
     restart: always
     volumes:
-      - ./nginx/certs:/etc/nginx/certs
+      - ./nginx-config:/nginx-config
+      - ./nginx-config/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./network-config:/network-config
     ports: 
       - 80:80
       - 443:443
+      - 5000:5000
     networks:
       - internal
     depends_on:
-      - api
+      - backend
+      - beacon
 networks:
   internal:

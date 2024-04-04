@@ -1,0 +1,13 @@
+[
+    {"node_name":"F. Puigvert1","node_host":"192.168.103.112:5000"},
+    {"node_name":"F. Puigvert1","node_host":"192.168.103.112:5000"},
+    {"node_name":"F. Puigvert1","node_host":"192.168.103.112:5000"},
+    {"node_name":"F. Puigvert1","node_host":"192.168.103.112:5000"},
+    {"node_name":"F. Puigvert2","node_host":"192.168.103.120"},
+    {"node_name":"F. Puigvert3","node_host":"192.168.103.121"},
+    {"node_name":"F. Puigvert4","node_host":"192.168.103.112"},
+    {"node_name":"F. Puigvert5","node_host":"192.168.103.113"},
+    {"node_name":"F. Puigvert6","node_host":"google.es"},
+    {"node_name":"F. Puigvert7","node_host":"192.168.102.120"},
+    {"node_name":"F. Puigvert8","node_host":"192.168.104.120"}
+]

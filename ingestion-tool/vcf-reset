@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+import mariadb
+import pysam
+import sys
+import os
+import time
+
+password = os.environ['MARIADB_ROOT_PASSWORD']
+db = os.environ['MARIADB_DATABASE']
+
+# ARE YOU SURE?
+if input("Are you sure you want to remove all the variants? (y/n) ") != "y":
+    exit(0)
+
+# MAIN WORKFLOW
+    
+print("Removing ALL genotypes from VCF database... please wait..", file=sys.stderr)
+
+try:
+    conn = mariadb.connect(
+        user="root",
+        password=password,
+        host="mariadb",
+        database=db,
+        autocommit=True )
+except mariadb.Error as e:
+   print(f"Error connecting to the database: {e}", file=sys.stderr)
+   sys.exit(1)
+   
+cur = conn.cursor() 
+try:
+    cur.execute("DELETE FROM vcf_genotypes") 
+except mariadb.Error as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)
+
+print("Finished!", file=sys.stderr)
