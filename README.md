@@ -1,6 +1,6 @@
-# Xarxa Interhospitalaria Catalana de Variants Genètiques
-## Node software documentation
+# xicvar-node
 
+xicvar-node is a webapp server to shared genomic variants within a two-way TLS-encrypted private network. It has been developed for the Xarxa Interhospitalaria Catalana de Variants Genètiques which was funded by a reserach grant from LaMarato 2019 and comprised many hospitals in Catalonia.
 
 
 ### Installation
