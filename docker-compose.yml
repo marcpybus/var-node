@@ -1,49 +1,53 @@
 services:
-  backend:
-    build: backend/.
+  webapp-server:
+    build: webapp-server/.
     restart: always
     volumes:
-      - ./backend/flask:/flask-app
-      - ./network-config:/network-config
-      - ./data:/data
+      - ./webapp-server/app/app.py:/app/app.py
+      - ./webapp-server/app/static:/app/static
+      - ./webapp-server/app/templates:/app/templates
+      - ./webapp-server/data:/data
+      - ./network-configuration:/network-configuration
     networks:
       - internal
-  beacon:
-    build: beacon/.
+  variant-server:
+    build: variant-server/.
     restart: always
     environment:
-      MARIADB_ROOT_PASSWORD: lamarato2019
-      MARIADB_DATABASE: balisadb
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
     volumes:
-      - ./beacon:/flask-app
+      - ./variant-server/app.py:/app/app.py
     networks:
       - internal
   ingestion-tool:
     build: ingestion-tool/.
+    volumes:
+      - ./data-ingestion:/data-ingestion
     environment:
-      MARIADB_ROOT_PASSWORD: lamarato2019
-      MARIADB_DATABASE: balisadb
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
     networks:
       - internal
   mariadb:
-    image: mariadb:10.8-focal
+    build: mariadb/.
     restart: always
-    command: --max_allowed_packet=1073741824 --innodb_buffer_pool_chunk_size=128M --innodb_buffer_pool_size=16G --innodb_log_buffer_size=1G --innodb_log_file_size=4G --innodb_write_io_threads=15 --innodb_read_io_threads=15 --innodb_flush_log_at_trx_commit=0 --innodb_file_per_table=1 --innodb_flush_method=O_DIRECT --innodb_io_capacity=1000 --innodb_open_files=5000 --query_cache_type=ON --query_cache_size=16M --thread_pool_size=30 --thread_pool_idle_timeout=3600 --thread_handling=pool-of-threads --max_connections=500
+    command: --max_allowed_packet=1073741824 --innodb_buffer_pool_chunk_size=128M --innodb_buffer_pool_size=16G --innodb_log_buffer_size=1G --innodb_log_file_size=4G --innodb_write_io_threads=15 --innodb_read_io_threads=15 --innodb_flush_log_at_trx_commit=0 --innodb_file_per_table=1 --innodb_flush_method=O_DIRECT --innodb_io_capacity=1000 --innodb_open_files=5000 --query_cache_type=ON --query_cache_size=16M --thread_pool_size=30 --thread_pool_idle_timeout=3600 --thread_handling=pool-of-threads --max_connections=500 --innodb_autoinc_lock_mode=2
     networks:
       - internal
     environment:
-      MARIADB_ROOT_PASSWORD: lamarato2019
-      MARIADB_DATABASE: balisadb
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
     volumes:
-      - ./mariadb-data:/var/lib/mysql
-      - ./schema-mariadb.sql:/docker-entrypoint-initdb.d/schema-mariadb.sql
+      - ./mariadb/mariadb-data:/var/lib/mysql
+      - ./mariadb/schema-mariadb.sql:/docker-entrypoint-initdb.d/schema-mariadb.sql
   nginx:
-    image: nginx:stable-alpine3.17
+    build: nginx/.
     restart: always
     volumes:
-      - ./nginx-config:/nginx-config
-      - ./nginx-config/nginx.conf:/etc/nginx/conf.d/nginx.conf
-      - ./network-config:/network-config
+      - ./nginx/server-certificates:/server-certificates
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./network-configuration:/network-configuration
     ports: 
       - 80:80
       - 443:443
@@ -51,7 +55,7 @@ services:
     networks:
       - internal
     depends_on:
-      - backend
-      - beacon
+      - webapp-server
+      - variant-server
 networks:
   internal:

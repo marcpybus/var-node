@@ -271,9 +271,92 @@
                 </div>
               </div>
               <div class="row top-buffer">
-                <div class="col-xs-1 text-right"></div>
-                <div class="col-xs-9 text-left">
-                  <span class="text-danger"><i>* please note that a maximum of 50 samples per node will be shown at random</i></span>             
+                <div class="col-xs-2 text-right">
+                  <b>Important notes:</b>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  - only variants mapped to primary assembled chromosomes are inserted into the database: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,X,Y,MT            
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  - variants with hg19 / hg38 chromosomes have been lift over their equivalent GRCh37 / GRCh38 chromosome nomenclature (i.e. chr1 -> 1, M -> MT, ...)             
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  - all the variants in the database have been left-aligned and normalized, and multiallelic sites have been splited into biallelic records, using the following Ensembl primary assemblies and command line:              
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  &emsp;<code>https://ftp.ensembl.org/pub/grch37/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz</code>             
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  &emsp;<code>https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz</code>             
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  &emsp;<code>bcftools norm --fasta-ref $FASTA --multiallelics -any</code>           
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  - queried variant annotation is performed on-the-fly using VEP version 111 with the following vep_cache files:           
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  &emsp;<code>https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz</code>             
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  &emsp;<code >https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz</code>             
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  - queried variant liftover is performed on-the-fly using Crossmap with the following chain files:          
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  &emsp;<code >https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh37_to_GRCh38.chain.gz</code>             
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  &emsp;<code >https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh38_to_GRCh37.chain.gz</code>             
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  - variants containing * (star) or . (missing) alleles are not included in the database           
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1"></div>
+                <div class="col-xs-10 text-left">
+                  - a maximum of 50 random samples per node will be shown     
                 </div>
               </div>
             </div>

@@ -1,1 +1,0 @@
-WARNING: variant skipped (X 16982504 . G A PASS .): Specified reference allele G does not match Ensembl reference allele

@@ -13,10 +13,10 @@ import ssl
 import subprocess
 import re
 
-CERT = '/network-config/cert.pem'
-KEY = '/network-config/key.pem'
-CACERT = '/network-config/ca-cert.pem'
-NODES = '/network-config/nodes.json'
+CERT = '/network-configuration/cert.pem'
+KEY = '/network-configuration/key.pem'
+CACERT = '/network-configuration/ca-cert.pem'
+NODES = '/network-configuration/nodes.json'
 TIMEOUT = None
 SUPPORTED_CHROMOSOMES = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y","MT"]
 SUPPORTED_GENOMES = {
@@ -106,7 +106,7 @@ def validate_variant_id(genome, variant_id):
 
     if data["validation"] == "OK" :
         vcf_input = chromosome + " " + str(position) + " . " + reference + " " + alternative + " PASS ."
-        output = subprocess.run(["/ensembl-vep/vep","--dont_skip","--check_ref","--cache","--offline","--dir_cache",SUPPORTED_GENOMES[genome]["cache"],"--fasta",SUPPORTED_GENOMES[genome]["fasta"],"--assembly",SUPPORTED_GENOMES[genome]["assembly"],"--merged","--transcript_version","--hgvs","--hgvsg","--vcf","-input_data",vcf_input,"-o","STDOUT","--no_stats","--quiet"], capture_output=True, text=True)
+        output = subprocess.run(["/ensembl-vep/vep","--dont_skip","--check_ref","--cache","--offline","--dir_cache",SUPPORTED_GENOMES[genome]["cache"],"--fasta",SUPPORTED_GENOMES[genome]["fasta"],"--assembly",SUPPORTED_GENOMES[genome]["assembly"],"--merged","--transcript_version","--hgvs","--hgvsg","--vcf","-input_data",vcf_input,"-o","STDOUT","--no_stats","--quiet","--warning_file","STDERR","--skipped_variants_file","STDERR"], capture_output=True, text=True)
         vcf = output.stdout
         for vcf_line in vcf.splitlines():
             if not vcf_line.startswith("#"):
