@@ -10,7 +10,7 @@ import mysql.connector
 
 app = Flask( __name__ )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_port=1, x_proto=1, x_prefix=1)
-app.config["TEMPLATES_AUTO_RELOAD"] = True
+
 password = os.environ['MARIADB_ROOT_PASSWORD']
 db = os.environ['MARIADB_DATABASE']
 
@@ -21,7 +21,7 @@ def get_genomes():
         print(f"Error connecting to MariaDB Platform: {e}")
         sys.exit(1)
     cur = conn.cursor(dictionary=True)
-    cur.execute(" SELECT genome FROM avalaible_genomes ")
+    cur.execute(" SELECT genome FROM available_genomes ")
     result = []
     for row in cur:
         result.append(row["genome"])

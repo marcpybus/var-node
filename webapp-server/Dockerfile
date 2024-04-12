@@ -5,7 +5,7 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Madrid
 RUN apt update && \
-    apt install -y default-jre wget curl tabix python3-pip gunicorn python3-gevent python3-pysam python3-requests git build-essential \
+    apt install -y samtools bcftools default-jre wget curl tabix python3-pip gunicorn python3-gevent python3-pysam python3-requests git build-essential \
     libdbi-perl libdbd-mysql-perl libarchive-zip-perl libhttp-tiny-perl libwww-perl \
     libarchive-extract-perl libbz2-dev liblzma-dev zlib1g-dev libmodule-build-perl && \
     apt-get clean && \

@@ -18,7 +18,15 @@ KEY = '/network-configuration/key.pem'
 CACERT = '/network-configuration/ca-cert.pem'
 NODES = '/network-configuration/nodes.json'
 TIMEOUT = None
-SUPPORTED_CHROMOSOMES = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y","MT"]
+
+SUPPORTED_CHROMOSOMES = {
+    "chr1": "1",    "chr2": "2",    "chr3": "3",    "chr4": "4",    "chr5": "5",
+    "chr6": "6",    "chr7": "7",    "chr8": "8",    "chr9": "9",    "chr10": "10",
+    "chr11": "11",  "chr12": "12",  "chr13": "13",  "chr14": "14",  "chr15": "15",
+    "chr16": "16",  "chr17": "17",  "chr18": "18",  "chr19": "19",  "chr20": "20",
+    "chr21": "21",  "chr22": "22",  "chrX": "X",    "chrY": "Y",    "chrM": "MT"
+}
+
 SUPPORTED_GENOMES = {
     "grch37":{
         "cache":"/data/grch37/vep_cache",
@@ -40,119 +48,114 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # FUNCTIONS
 
-def make_lift_over(genome, variant_id):
-    data = { "validation": "OK", "variant_id": variant_id }
-    variant_id_list = variant_id.split("-")
-    if len(variant_id_list) == 4:
-        chromosome  = variant_id_list[0]
-        position  = int(variant_id_list[1])
-        reference  = variant_id_list[2]
-        alternative  = variant_id_list[3]
-        if reference == alternative:
-            data["validation"] = "Same reference and alternative allele" 
-        if not re.match('^[ACTG]+$',reference):
-            data["validation"] = "Wrong reference allele format" 
-        if not re.match('^[ACTG]+$',alternative):
-            data["validation"] = "Wrong alternative allele format"  
-        if position < 0 or position > 1000000000:
-            data["validation"] = "Wrong position format or position number"  
-        if chromosome not in SUPPORTED_CHROMOSOMES:
-            data["validation"] = "Wrong chromosome format"   
-        if genome not in SUPPORTED_GENOMES.keys():
-            data["validation"] = "Wrong genome format"  
-    else:
-        data["validation"] = "Wrong variant_id format" 
-    
-    if( genome == "grch37" ):
-        data["new_genome"] = "grch38"
-    elif( genome == "grch38" ):
-        data["new_genome"] = "grch37"
-    else:
-        data["validation"] = "Wrong reference genome" 
+def validate_genome_format(variant_id_data):
+    if variant_id_data["genome"] not in SUPPORTED_GENOMES.keys():
+        variant_id_data["validation"] = "Incorrect reference genome"
+    return variant_id_data
 
-    if data["validation"] == "OK" :
-        tempdir = tempfile.mkdtemp()
-        with open(tempdir + "/input.bed", 'w') as f:
-            f.write(chromosome + " " + str(position) + " " + str(position) + "\n")
+def uscs_to_grch_chromosomes(variant_id_data):
+    if variant_id_data["chromosome"] in SUPPORTED_CHROMOSOMES.values():
+        variant_id_data["chromosome"] = variant_id_data["chromosome"]
+    elif variant_id_data["chromosome"] in SUPPORTED_CHROMOSOMES.keys():
+        variant_id_data["chromosome"] = SUPPORTED_CHROMOSOMES[ variant_id_data["chromosome"] ]
+    else:
+        variant_id_data["validation"] = "Incorrect assembled chromsome"
+    return variant_id_data
+
+def validate_variant_id_format( variant_id_data ):
+    if re.findall("^(\w+)-(\d+)-([ACTG]+)-([ACTG]+)$", variant_id_data["variant_id"]):
+        variant_id_list = variant_id_data["variant_id"].split("-")
+        variant_id_data["chromosome"] = variant_id_list[0]
+        variant_id_data["position"] = variant_id_list[1]
+        variant_id_data["reference"] = variant_id_list[2]
+        variant_id_data["alternative"] = variant_id_list[3]
+    else:
+        variant_id_data["validation"] = "Incorrect variant_id format"
+    return variant_id_data
+
+def variant_id_normalization(variant_id_data):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        with open(temp_dir + "/input.vcf", 'w') as f:
+            f.write("##fileformat=VCFv4.2\n##FORMAT=<ID=GT,Number=1,Type=String,Description='Genotype'>\n##contig=<ID="+variant_id_data["chromosome"]+",length=10000000000>\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\ttFILTER\tINFO\tFORMAT\tSAMPLE\n"+variant_id_data["chromosome"]+"\t"+variant_id_data["position"]+"\t.\t"+variant_id_data["reference"]+"\t"+variant_id_data["alternative"]+"\t.\tPASS\t.\tGT\t0/1")
             f.close()
-        output = subprocess.run(["CrossMap","bed",SUPPORTED_GENOMES[genome]["liftover"],tempdir + "/input.bed","/dev/stdout"], capture_output=True, text=True)
-        bed = output.stdout
-        bed_list = bed.split("\t")
-        data["new_variant_id"] = bed_list[0] + "-" + bed_list[1] + "-" + reference + "-" + alternative
-    return data
+        output = subprocess.run(['bcftools','norm','--fasta-ref',SUPPORTED_GENOMES[variant_id_data["genome"]]["fasta"],'--check-ref','wx', temp_dir + "/input.vcf"], capture_output=True, text=True, )
+        if "REF_MISMATCH" in output.stderr:
+            for line in output.stderr.split("\n"):
+                if line.startswith("REF_MISMATCH"):
+                    variant_id_data["validation"] = line.replace("\t"," ")
+        else:
+            for line in output.stdout.split("\n"):
+                if line.startswith(variant_id_data["chromosome"]):
+                    vcf_line_list = line.split("\t")
+                    variant_id_data["chromosome"] = vcf_line_list[0]
+                    variant_id_data["position"] = vcf_line_list[1]
+                    variant_id_data["reference"] = vcf_line_list[3]
+                    variant_id_data["alternative"] = vcf_line_list[4]
+        return variant_id_data
 
-def validate_variant_id(genome, variant_id):
-    data = { "validation": "OK", "variant_id": variant_id }
-    variant_id_list = variant_id.split("-")
-    if len(variant_id_list) == 4:
-        chromosome  = variant_id_list[0]
-        position  = int(variant_id_list[1])
-        reference  = variant_id_list[2]
-        alternative  = variant_id_list[3]
-        if reference == alternative:
-            data["validation"] = "Same reference and alternative allele" 
-        if not re.match('^[ACTG]+$',reference):
-            data["validation"] = "Wrong reference allele format" 
-        if not re.match('^[ACTG]+$',alternative):
-            data["validation"] = "Wrong alternative allele format"  
-        if position < 0 or position > 1000000000:
-            data["validation"] = "Wrong position format or position number"  
-        if chromosome not in SUPPORTED_CHROMOSOMES:
-            data["validation"] = "Wrong chromosome format"   
-        if genome not in SUPPORTED_GENOMES.keys():
-            data["validation"] = "Wrong genome format"  
-    else:
-        data["validation"] = "Wrong variant_id format" 
-
-    if data["validation"] == "OK" :
-        vcf_input = chromosome + " " + str(position) + " . " + reference + " " + alternative + " PASS ."
-        output = subprocess.run(["/ensembl-vep/vep","--dont_skip","--check_ref","--cache","--offline","--dir_cache",SUPPORTED_GENOMES[genome]["cache"],"--fasta",SUPPORTED_GENOMES[genome]["fasta"],"--assembly",SUPPORTED_GENOMES[genome]["assembly"],"--merged","--transcript_version","--hgvs","--hgvsg","--vcf","-input_data",vcf_input,"-o","STDOUT","--no_stats","--quiet","--warning_file","STDERR","--skipped_variants_file","STDERR"], capture_output=True, text=True)
-        vcf = output.stdout
-        for vcf_line in vcf.splitlines():
-            if not vcf_line.startswith("#"):
-                print( vcf_line , file=sys.stderr)
-                vcf_list = vcf_line.split("\t")
-                chr = vcf_list[0]
-                pos = vcf_list[1]
-                ref = vcf_list[3]
-                alt = vcf_list[4]
-                data["variant_id"] = chr + "-" + pos + "-" + ref + "-" + alt
-                data["genome"] = genome
-                data["results"] = []
-                info_field = vcf_list[7]
-                info_list = info_field[4:].split(",")
-                for tx_info in info_list:
-                    tx_data = {}
-                    tx_info_list = tx_info.split("|")
-                    gene = tx_info_list[3]
-                    tx_id = tx_info_list[6]
-                    if tx_info_list[30]:
-                        hgvsc_list = tx_info_list[10].split(":")
-                        hgvsc = ''
-                        if len(hgvsc_list) > 1: hgvsc = hgvsc_list[1] 
-                        hgvsp_list = tx_info_list[11].split(":")
-                        hgvsp = ''
-                        if len(hgvsp_list) > 1: hgvsp = hgvsp_list[1] 
-                        hgvsg_list = tx_info_list[30].split(":")
-                        hgvsg = ''
-                        if len(hgvsg_list) > 1: hgvsg = hgvsg_list[1] 
-                        if hgvsc == '': hgvsc = hgvsg
-                        if gene:
-                            internal_id =  gene + "(" + tx_id + "):" + hgvsc
-                        else:
-                            internal_id =  tx_info_list[30]
-                        if hgvsp != '': internal_id = internal_id + ":" + hgvsp
-                        tx_data["internal_id"] = internal_id
-                    if tx_info_list[1]:
-                        tx_data["consequence"] = tx_info_list[1]
-                    if tx_info_list[2]:
-                        tx_data["impact"] = tx_info_list[2]
-                    if tx_info_list[31] == "failed":
-                        data["validation"] = "Incorrect reference allele at selected genome position"
+def variant_id_annotation(variant_id_data):
+    vcf_input = variant_id_data["chromosome"] + " " + variant_id_data["position"] + " . " + variant_id_data["reference"] + " " + variant_id_data["alternative"] + " PASS ."
+    output = subprocess.run(["/ensembl-vep/vep","--dont_skip","--cache","--offline","--dir_cache",SUPPORTED_GENOMES[variant_id_data["genome"]]["cache"],"--fasta",SUPPORTED_GENOMES[variant_id_data["genome"]]["fasta"],"--assembly",SUPPORTED_GENOMES[variant_id_data["genome"]]["assembly"],"--merged","--transcript_version","--hgvs","--hgvsg","--vcf","-input_data",vcf_input,"-o","STDOUT","--no_stats","--quiet","--warning_file","STDERR","--skipped_variants_file","STDERR"], capture_output=True, text=True)
+    vcf = output.stdout
+    for vcf_line in vcf.splitlines():
+        if not vcf_line.startswith("#"):
+            print( vcf_line , file=sys.stderr)
+            vcf_list = vcf_line.split("\t")
+            chr = vcf_list[0]
+            pos = vcf_list[1]
+            ref = vcf_list[3]
+            alt = vcf_list[4]
+            variant_id_data["variant_id"] = chr + "-" + pos + "-" + ref + "-" + alt
+            variant_id_data["genome"] = variant_id_data["genome"]
+            variant_id_data["results"] = []
+            info_field = vcf_list[7]
+            info_list = info_field[4:].split(",")
+            for tx_info in info_list:
+                tx_data = {}
+                tx_info_list = tx_info.split("|")
+                gene = tx_info_list[3]
+                tx_id = tx_info_list[6]
+                if tx_info_list[30]:
+                    hgvsc_list = tx_info_list[10].split(":")
+                    hgvsc = ''
+                    if len(hgvsc_list) > 1: hgvsc = hgvsc_list[1] 
+                    hgvsp_list = tx_info_list[11].split(":")
+                    hgvsp = ''
+                    if len(hgvsp_list) > 1: hgvsp = hgvsp_list[1] 
+                    hgvsg_list = tx_info_list[30].split(":")
+                    hgvsg = ''
+                    if len(hgvsg_list) > 1: hgvsg = hgvsg_list[1] 
+                    if hgvsc == '': hgvsc = hgvsg
+                    if gene:
+                        internal_id =  gene + "(" + tx_id + "):" + hgvsc
                     else:
-                        data["validation"] = "OK"
-                        data["results"].append(tx_data)
-    return data
+                        internal_id =  tx_info_list[30]
+                    if hgvsp != '': internal_id = internal_id + ":" + hgvsp
+                    tx_data["internal_id"] = internal_id
+                if tx_info_list[1]:
+                    tx_data["consequence"] = tx_info_list[1]
+                if tx_info_list[2]:
+                    tx_data["impact"] = tx_info_list[2]
+                variant_id_data["results"].append(tx_data)
+    return variant_id_data
+
+def make_lift_over(variant_id_data):
+    if( variant_id_data["genome"] == "grch37" ):
+        variant_id_data["new_genome"] = "grch38"
+    elif( variant_id_data["genome"] == "grch38" ):
+        variant_id_data["new_genome"] = "grch37"
+    else:
+        variant_id_data["validation"] = "Incorrect reference genome at liftover" 
+    if variant_id_data["new_genome"]:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with open(temp_dir + "/input.bed", 'w') as f:
+                f.write(variant_id_data["chromosome"] + " " + variant_id_data["position"] + " " + variant_id_data["position"] + "\n")
+                f.close()
+            output = subprocess.run(["CrossMap","bed",SUPPORTED_GENOMES[variant_id_data["genome"]]["liftover"],temp_dir + "/input.bed","/dev/stdout"], capture_output=True, text=True)
+            bed = output.stdout
+            bed_list = bed.split("\t")
+            variant_id_data["new_variant_id"] = bed_list[0] + "-" + bed_list[1] + "-" + variant_id_data["reference"] + "-" + variant_id_data["alternative"]
+    return variant_id_data
 
 async def make_request(session, node, genome, variant_id):
     if genome and variant_id:
@@ -202,30 +205,52 @@ async def info(variant_id = '', genome = ''):
 
 @app.route('/<genome>/<variant_id>')
 async def show_variant_id_results(genome, variant_id):
-    variant_id = variant_id.replace("chr","")
-    variant_id_data = validate_variant_id(genome, variant_id)
+    results = {}
+    variant_id_data = { "validation": "OK", "variant_id": variant_id, "genome": genome }
+    variant_id_data = validate_genome_format(variant_id_data)
     if variant_id_data["validation"] == "OK":
-        results = await get_data_from_nodes(genome, variant_id)
-    else:
-        results = {}
+        variant_id_data = validate_variant_id_format(variant_id_data)
+        if variant_id_data["validation"] == "OK":
+            uscs_to_grch_chromosomes(variant_id_data)
+            if variant_id_data["validation"] == "OK":
+                variant_id_data = variant_id_normalization(variant_id_data)
+                if variant_id_data["validation"] == "OK":
+                    variant_id_data = variant_id_annotation(variant_id_data)
+                    if variant_id_data["validation"] == "OK":
+                        results = await get_data_from_nodes(genome, variant_id)
     return render_template("base.html", variant_id_data = variant_id_data, results = results)
     
 @app.route('/json/<genome>/<variant_id>')
 async def show_variant_id_json(genome, variant_id):
-    variant_id = variant_id.replace("chr","")
-    variant_id_data = validate_variant_id(genome, variant_id)
+    results = {}
+    variant_id_data = { "validation": "OK", "variant_id": variant_id, "genome": genome }
+    variant_id_data = validate_genome_format(variant_id_data)
     if variant_id_data["validation"] == "OK":
-        results = await get_data_from_nodes(genome, variant_id)
-    else:
-        results = {}
+        variant_id_data = validate_variant_id_format(variant_id_data)
+        if variant_id_data["validation"] == "OK":
+            uscs_to_grch_chromosomes(variant_id_data)
+            if variant_id_data["validation"] == "OK":
+                variant_id_data = variant_id_normalization(variant_id_data)
+                if variant_id_data["validation"] == "OK":
+                    variant_id_data = variant_id_annotation(variant_id_data)
+                    if variant_id_data["validation"] == "OK":
+                        results = await get_data_from_nodes(genome, variant_id)
     return render_template("json.html", variant_id_data = variant_id_data, results = results)
 
 @app.route('/liftover/<genome>/<variant_id>')
 async def make_liftover(genome, variant_id):
-    variant_id = variant_id.replace("chr","")
-    lift_over_data = make_lift_over(genome, variant_id)
-    if lift_over_data["validation"] == "OK":
-        return redirect("/" + lift_over_data["new_genome"] + "/" + lift_over_data["new_variant_id"])
+    variant_id_data = { "validation": "OK", "variant_id": variant_id, "genome": genome }
+    variant_id_data = validate_genome_format(variant_id_data)
+    if variant_id_data["validation"] == "OK":
+        variant_id_data = validate_variant_id_format(variant_id_data)
+        if variant_id_data["validation"] == "OK":
+            uscs_to_grch_chromosomes(variant_id_data)
+            if variant_id_data["validation"] == "OK":
+                variant_id_data = variant_id_normalization(variant_id_data)
+                if variant_id_data["validation"] == "OK":
+                    variant_id_data = make_lift_over(variant_id_data)
+    if variant_id_data["validation"] == "OK":
+        return redirect("/" + variant_id_data["new_genome"] + "/" + variant_id_data["new_variant_id"])
     else:
-        return "Lift over error! " + lift_over_data["validation"]
+        return "Lift over error! " + variant_id_data["validation"]
     

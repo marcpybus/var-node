@@ -14,6 +14,7 @@ if [ ! -f /data/grch37/fasta/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz ] ||
     wget --no-verbose --show-progress --progress=dot:giga -O /data/grch37/fasta/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz  http://ftp.ensembl.org/pub/grch37/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz
     gzip -d /data/grch37/fasta/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz
     bgzip /data/grch37/fasta/Homo_sapiens.GRCh37.dna.primary_assembly.fa
+    samtools faidx /data/grch37/fasta/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz
 fi
 echo "    --> OK "
 
@@ -24,6 +25,7 @@ if [ ! -f /data/grch38/fasta/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz ] ||
     wget --no-verbose --show-progress --progress=dot:giga -O /data/grch38/fasta/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz http://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
     gzip -d /data/grch38/fasta/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
     bgzip /data/grch38/fasta/Homo_sapiens.GRCh38.dna.primary_assembly.fa
+    samtools faidx /data/grch38/fasta/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
 fi
 echo "    --> OK "
 

@@ -1,6 +1,7 @@
 
 
 CREATE TABLE `vcf_genotypes` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `genome` VARCHAR(6) NOT NULL,
   `contig` VARCHAR(2) NOT NULL,
   `sample` VARCHAR(50) NOT NULL,
@@ -9,9 +10,10 @@ CREATE TABLE `vcf_genotypes` (
   `alt` VARCHAR(1000) NOT NULL,
   `zigosity` VARCHAR(3) NOT NULL,
   `genotype_details` VARCHAR(5000) NOT NULL,
-  PRIMARY KEY (`genome`,`contig`,`sample`,`pos`),
+  PRIMARY KEY (`id`),
   KEY `by_genome` (`genome`),
   KEY `by_contig` (`contig`),
+  KEY `by_sample` (`sample`),
   KEY `by_pos` (`pos`),
   KEY `by_ref` (`ref`(10)),
   KEY `by_alt` (`alt`(10))
