@@ -1,16 +1,20 @@
 # xicvar-node
 
-*xicvar-node* is a web-based server to share genomic variants within TLS-encrypted private network of nodes. It has been developed for the Xarxa Interhospitalaria Catalana de Variants Genètiques which was funded by a research grant from "La Marato 2019" and it comprises many hospitals in Catalonia.
+*xicvar-node* is a web server tool that allows to share genomic variants within secure private network of nodes. 
+It consists of two Flask containers (variant-server and web-server) that work behind a reverse-proxy (nginx) that implements two-way TLS encryptation. Requests to the variant-server are encrypted with a certificate signed by the network's CA certificate. Client is also authenticated with a certificate signed by the network's CA certificate through nginx's "client certificate verification" directive. This implements a server AND client two-way TLS encryptation that secures any communitation between network's nodes.
+
+![xicvar-node (1)](https://github.com/marcpybus/xicvar-node/assets/12168869/0944eaa1-ddd2-4a18-b340-6e4037ef49c0)
+
+*xicvar-node* has been developed for the Xarxa Interhospitalaria Catalana de Variants Genètiques which was funded by a research grant from "La Marato" in 2019.
 
 ### Installation
 
-### Installation
 
 
 ### Configure network certificates
 #### Creating the Certificate Authority's Certificate and Key
 ```console
-openssl req -x509 -newkey rsa:4096 -subj '/CN=XIC-VAR-CA' -keyout ca-key.pem -out ca-cert.pem -days 365
+openssl req -x509 -newkey rsa:4096 -subj '/CN=My-Own-CA' -keyout ca-key.pem -out ca-cert.pem -days 365
 ```
 * use a "very-long" passphrase to encript the key
 * certificate expiration is set to 1 year
