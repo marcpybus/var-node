@@ -23,10 +23,10 @@ services:
       - ./variant-server/app.py:/app/app.py
     networks:
       - internal
-  ingestion-tool:
-    build: ingestion-tool/.
+  data-loader:
+    build: data-loader/.
     volumes:
-      - ./ingestion-tool:/apps
+      - ./data-loader:/apps
       - ./data/grch37:/data/grch37
       - ./data/grch38:/data/grch38
     environment:
