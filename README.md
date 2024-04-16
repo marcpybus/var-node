@@ -24,13 +24,14 @@ cd xicvar-node
 docker compose up --build -d
 docker compose logs -f
 ```
-IMPORTANT
+### IMPORTANT
 The first time the project is up, it will download arround 46 Gb of data:
-- fasta files: GRCh37 and GRCh38 primary assemblies from Ensembl
-- vep caches: GRCh37 and GRCh38 version 111 VEP caches
-- chain files: GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files
+...- fasta files: GRCh37 and GRCh38 primary assemblies from Ensembl
+...- vep caches: GRCh37 and GRCh38 version 111 VEP caches
+...- chain files: GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files
+...Downloading can be tracked at the project's logs
 
-### Configuration
+### Network configuration
 
 
 ### Configure network certificates
