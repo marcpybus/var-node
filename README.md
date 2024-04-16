@@ -15,11 +15,16 @@
 #### Requeriments
 - Linux OS
 - Docker Compose
+- git
 
 #### Installation
 ```console
 git clone https://github.com/marcpybus/xicvar-node.git
+cd xicvar-node
+docker compose up --build -d
+docker compose logs -f
 ```
+
 ### Configuration
 
 
