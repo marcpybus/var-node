@@ -2,19 +2,23 @@
 
 *xicvar-node* is a Docker Compose setup that allows to share genomic variants within a secure private group of public nodes. It consists of two Flask applications (variant-server and web-server containers) that work behind a reverse-proxy (nginx container) that implements two-way SSL encryptation for communication. Variants and their metadata are stored in a MariaDB database (mariadb container) which is populated by a software tool (data-loader container) that normalizes (indel left-alignment+biallelification) genomic variants from VCF files.
 
-*xicvar-node* is intented to be run within an institution's private network so the frontend is only accesible by the institution's users throught the 443 port.
+*xicvar-node* is intented to be run within an institution's private network so the frontend is only accesible by the institution's users:
 - Access to the frontend is controlled using nginx's http basic authentication directive and communication is SSL encrypted.
-- Queried variants are normalized and validated on-the-fly by Bcftools (bcftools norm --check_ref) and then forwarded to all the configured nodes.
+- Queried variants are normalized and validated on-the-fly by Bcftools (```console bcftools norm --check_ref ```) and then forwarded to all the configured nodes.
 - Ensembl VEP is used to annotate the queried variant and its results are showed in the frontend.
 - Liftover is also performed on-the-fly with Crossmap using Ensembl chain files when requested.
-- 
-
-Requests to the variant-server are encrypted with a certificate signed by the network's CA certificate. Client is also authenticated with a certificate signed by the network's CA certificate through nginx's "client certificate verification" directive. This implements a server AND client two-way TLS encryptation that secures any communitation between network's nodes.
+- Incoming variant requests from external nodes are routed to the port 5000 in the nginx container, client verified and then redirected to the variant-server container. Typical SSL encryptation is carried out using certificates signed by the network's own CA certificate. Client verification is also performed using nginx's "client certificate verification" directive with certificates also signed by the network's own CA certificate. This setup ensures specific two-way SSL encryptation between communicating nodes.
 
 ![xicvar-node (3)](https://github.com/marcpybus/xicvar-node/assets/12168869/b3c3478c-45c0-45a3-a859-29bde28f2185)
 
+### Installation and configuration
 
-### Installation
+
+
+
+```console
+git clone
+```
 
 
 
