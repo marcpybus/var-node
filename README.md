@@ -26,15 +26,15 @@ docker compose logs -f
 ```
 ### IMPORTANT
 The first time the project is up, it will download arround 46 Gb of data:
-...- fasta files: GRCh37 and GRCh38 primary assemblies from Ensembl
-...- vep caches: GRCh37 and GRCh38 version 111 VEP caches
-...- chain files: GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files
-...Downloading can be tracked at the project's logs
+- fasta files: GRCh37 and GRCh38 primary assemblies from Ensembl
+- vep caches: GRCh37 and GRCh38 version 111 VEP caches
+- chain files: GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files
+Data downloading can be tracked at the project's logs
 
 ### Network configuration
+The default initial configuration have default dummy certificates configured so the local node can be queried.
+Only the local node is configured at the `network-configuration/nodes.json` file.
 
-
-### Configure network certificates
 #### Creating the Certificate Authority's Certificate and Key
 ```console
 openssl req -x509 -newkey rsa:4096 -subj '/CN=My-Own-CA' -keyout ca-key.pem -out ca-cert.pem -days 365
