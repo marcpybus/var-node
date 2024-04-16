@@ -5,8 +5,8 @@
 *xicvar-node* is intented to be run within an institution's private network so the frontend is only accesible by the institution's users:
 - Access to the frontend is controlled using nginx's http basic authentication directive and communication is SSL encrypted.
 - Queried variants are normalized and validated on-the-fly by Bcftools (`bcftools norm --check_ref`) and then forwarded to all the configured nodes.
-- Ensembl VEP is used to annotate the queried variant and its results are showed in the frontend.
-- Liftover is also performed on-the-fly with Crossmap using Ensembl chain files when requested.
+- Ensembl VEP is used to annotate the effects and consequences of the queried variant on genes, transcripts and proteins. The results is shown in the frontend.
+- When requested, variant liftover is performed on-the-fly with Crossmap using Ensembl chain files.
 - Incoming variant requests from external nodes are routed to the port 5000 in the nginx container, client verified and then redirected to the variant-server container. Typical SSL encryptation is carried out using certificates signed by the network's own CA certificate. Client verification is also performed using nginx ssl_verify_client directive with certificates also signed by the network's own CA certificate. This setup ensures specific two-way SSL encryptation between communicating nodes.
 
 ![xicvar-node (3)](https://github.com/marcpybus/xicvar-node/assets/12168869/b3c3478c-45c0-45a3-a859-29bde28f2185)
