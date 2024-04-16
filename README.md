@@ -29,10 +29,11 @@ The first time the project is up, it will download arround 46 Gb of data:
 - fasta files: GRCh37 and GRCh38 primary assemblies from Ensembl
 - vep caches: GRCh37 and GRCh38 version 111 VEP caches
 - chain files: GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files
+
 Data downloading can be tracked at the project's logs
 
 ### Network configuration
-The default initial configuration have default dummy certificates configured so the local node can be queried.
+The default initial configuration have default dummy certificates configured so the local node (172.18.0.6:5000) can be queried without further configuration.
 Only the local node is configured at the `network-configuration/nodes.json` file.
 
 #### Creating the Certificate Authority's Certificate and Key
