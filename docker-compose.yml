@@ -12,7 +12,8 @@ services:
       - ./data/liftover:/data/liftover
       - ./network-configuration:/network-configuration
     networks:
-      - internal
+      internal:
+        ipv4_address: 172.18.0.2
   variant-server:
     build: variant-server/.
     restart: always
@@ -22,7 +23,8 @@ services:
     volumes:
       - ./variant-server/app.py:/app/app.py
     networks:
-      - internal
+      internal:
+        ipv4_address: 172.18.0.3
   data-loader:
     build: data-loader/.
     volumes:
@@ -33,14 +35,16 @@ services:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
     networks:
-      - internal
+      internal:
+        ipv4_address: 172.18.0.4
   mariadb:
     build: mariadb/.
     restart: always
     command: --max_allowed_packet=1073741824
     #command: --max_allowed_packet=1073741824 --innodb_buffer_pool_chunk_size=128M --innodb_buffer_pool_size=16G --innodb_log_buffer_size=1G --innodb_log_file_size=4G --innodb_write_io_threads=15 --innodb_read_io_threads=15 --innodb_flush_log_at_trx_commit=0 --innodb_file_per_table=1 --innodb_flush_method=O_DIRECT --innodb_io_capacity=1000 --innodb_open_files=5000 --query_cache_type=ON --query_cache_size=16M --thread_pool_size=30 --thread_pool_idle_timeout=3600 --thread_handling=pool-of-threads --max_connections=500 --innodb_autoinc_lock_mode=2
     networks:
-      - internal
+      internal:
+        ipv4_address: 172.18.0.5
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
@@ -59,9 +63,13 @@ services:
       - 443:443
       - 5000:5000
     networks:
-      - internal
+      internal:
+        ipv4_address: 172.18.0.6
     depends_on:
       - webapp-server
       - variant-server
 networks:
   internal:
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16

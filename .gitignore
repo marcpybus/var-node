@@ -1,1 +1,3 @@
 data
+network-configuration
+!network-configuration/nodes.json
