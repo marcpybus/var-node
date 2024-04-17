@@ -69,7 +69,8 @@ docker exec -i xicvar-node-data-loader-1 remove-db grch37
 
 ### Network configuration
 The initial default configuration have dummy certificates configured so the local node (172.18.0.6:5000) can be queried without further configuration. A fake node is also configured for testing purposes.
-```json
+`networkk-configuration/nodes.json`
+```
 [
     {"node_name":"DOCKER_IP","node_host":"172.18.0.6:5000"},
     {"node_name":"DOCKER_DOMAIN","node_host":"nginx:5000"},
