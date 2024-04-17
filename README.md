@@ -2,7 +2,7 @@
 
 *xicvar-node* is a Docker Compose setup that allows to share genomic variants within a secure private group of public nodes. It mainly consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL encryptation for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
-*xicvar-node is intended to run within the private network of an institution, so that the frontend is accessible only to the users of the institution:
+*xicvar-node* is intended to run within the private network of an institution, so that the frontend is accessible only to the users of the institution:
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
 - Ensembl's VEP is used to annotate the effect and consequence of the query variant on genes, transcripts and proteins. The results are displayed on-the-fly in the frontend.
