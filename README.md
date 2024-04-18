@@ -34,10 +34,10 @@ The first time the web-server container is run, approximately 46 Gb of data will
 `https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz`
 `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 - Chain files (GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files):
-`https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh37_to_GRCh38.chain.gz`
-`https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh38_to_GRCh37.chain.gz`
+ - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh37_to_GRCh38.chain.gz`
+ - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh38_to_GRCh37.chain.gz`
 
-* Data downloading process can be tracked in Docker logs
+* Data downloading process can be tracked in docker container logs
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-loader** container:
