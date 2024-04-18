@@ -26,7 +26,7 @@ docker compose logs -f
 ```
 ### IMPORTANT
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
-The first time the web-server container is run, approximately 46 Gb of data will be downloaded:
+The first time the web-server container is run, approximately 46 Gb of data will be downloaded and saved in `data/`:
 - Fasta files (GRCh37 and GRCh38 primary assemblies from Ensembl):
     - `https://ftp.ensembl.org/pub/grch37/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz`
     - `https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`
