@@ -42,7 +42,7 @@ Data downloads can be tracked in Docker logs
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-loader** container:
 ```console
-docker exec -i xicvar-node-data-loader-1 vcf-ingestion.sh grch38 < file.vcf.gz
+docker exec -i xicvar-node-data-loader-1 vcf-ingestion grch38 < file.vcf.gz
 ```
 or using docker compose:
 ```console
@@ -50,7 +50,7 @@ cd xicvar-node
 docker compose exec -T data-loader vcf-ingestion.sh grch37 < file.vcf
 ```
 - Uncompressed or bgzip-compressed VCF file are allowed and the reference genome version (grch37 or grch38) have to be specified.
-- Variants from samples that are already in the databse won't be uploaded. ou should merge all the VCF files from a given sample and reupload them to the database.
+- Variants from samples that are present in the databse won't be uploaded. You should merge all the VCF files from a given sample and reupload them to the database.
 - Only variants mapped to primary assembled chromosomes are inserted into the database: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT
 - Variants with hg19/hg38 chromosome names will be lift over to their equivalent GRCh37/GRCh38 chromosome names.
 - Variants will be left-aligned and normalized, and multiallelic sites will be splitted into biallelic records with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`
@@ -59,25 +59,26 @@ docker compose exec -T data-loader vcf-ingestion.sh grch37 < file.vcf
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
 ```console
-docker exec -i xicvar-node-data-loader-1 remove-sample NA18548 grch38 
+docker exec -i xicvar-node-data-loader-1 remove-sample <grch37|grch38> <sample_name>
 ```
 Or alternatively, you can reset the whole database:
 ```console
-docker exec -i xicvar-node-data-loader-1 remove-db grch37 
+docker exec -i xicvar-node-data-loader-1 remove-all-variants <grch37|grch38> 
 ```
-- In both cases is necessary to specify the reference genome from which the variants will be removed.
+\* In both cases is necessary to specify the reference genome from which the variants will be removed.
 
 ### Network configuration
-The initial default configuration have dummy certificates configured so the local node (172.18.0.6:5000) can be queried without further configuration. A fake node is also configured for testing purposes.
-
-`networkk-configuration/nodes.json`
+The default configuration have dummy certificates configured so the nginx container (IP: 172.18.0.6 / Domain: nginx / Port: 5000) can be queried without further configuration. A fake node pointing to google.com is also configured for testing purposes:
+`network-configuration/nodes.json`
 ```
 [
-    {"node_name":"DOCKER_IP","node_host":"172.18.0.6:5000"},
-    {"node_name":"DOCKER_DOMAIN","node_host":"nginx:5000"},
-    {"node_name":"GOOGLE.COM","node_host":"google.com"}
+    {"node_name":"NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
+    {"node_name":"NGINX_DOMAIN","node_host":"nginx","node_port":"5000"},
+    {"node_name":"GOOGLE.COM","node_host":"google.com","node_port":"443"}
 ]
 ```
+
+Modify `network-configuration/nodes.json`
 
 
 #### Creating the Certificate Authority's Certificate and Key
