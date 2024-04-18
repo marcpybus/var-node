@@ -72,8 +72,8 @@ The default configuration have dummy certificates configured so the nginx contai
 `network-configuration/nodes.json`
 ```
 [
-    {"node_name":"NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
-    {"node_name":"NGINX_DOMAIN","node_host":"nginx","node_port":"5000"},
+    {"node_name":"DOCKER_NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
+    {"node_name":"DOCKER_NGINX_DOMAIN","node_host":"nginx","node_port":"5000"},
     {"node_name":"GOOGLE.COM","node_host":"google.com","node_port":"443"}
 ]
 ```
