@@ -42,12 +42,12 @@ The first time the web-server container is run, approximately 46 Gb of data will
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-loader** container:
 ```console
-docker exec -i xicvar-node-data-loader-1 vcf-ingestion grch38 < file.vcf.gz
+docker exec -i xicvar-node-data-loader-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
 ```
 or using docker compose:
 ```console
 cd xicvar-node
-docker compose exec -T data-loader vcf-ingestion.sh grch37 < file.vcf
+docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 ```
 - Uncompressed or bgzip-compressed VCF file are allowed and the reference genome version (grch37 or grch38) have to be specified.
 - Variants from samples that are present in the databse won't be uploaded. You should merge all the VCF files from a given sample and reupload them to the database.
