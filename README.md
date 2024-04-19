@@ -1,6 +1,6 @@
 # xicvar-node
 
-*xicvar-node* is a Docker Compose setup that allows to share genomic variants within a secure private group of public nodes. It mainly consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL encryptation for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*xicvar-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It mainly consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL encryptation for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
 *xicvar-node* is intended to run within the private network of an institution, so that the frontend is accessible only to the users of the institution:
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
@@ -9,7 +9,7 @@
 - If requested, the variant liftover will be performed on the fly with Crossmap using the Ensembl chain files.
 - Incoming variant requests from external nodes should be routed to port 5000 on the server hosting the Docker setup. Nginx will verify the client's certificate and then redirect the request to the variant server container. Server SSL encryption is achieved using a certificate signed by the network's own CA certificate. Client certificate verification is performed using the nginx ssl_verify_client directive with a certificate also signed by the network's own CA certificate. This setup ensures dedicated two-way SSL encryption between communicating nodes.
 
-![xicvar-node (3)](https://github.com/marcpybus/xicvar-node/assets/12168869/b3c3478c-45c0-45a3-a859-29bde28f2185)
+![xicvar-node (4)](https://github.com/marcpybus/xicvar-node/assets/12168869/ffe8b123-57f6-495d-b4e3-07a208c3e010)
 
 ### Installation and configuration
 #### Requeriments
