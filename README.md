@@ -5,9 +5,9 @@
 *xicvar-node* is intended to run within the private network (LAN) of an institution, so that the frontend is accessible only to the users of the institution:
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
-- Ensembl's VEP is used to annotate the effect and consequence of the query variant on genes, transcripts and proteins. Results are displayed on-the-fly in the frontend.
-- If requested, variant liftover will be performed on the fly with bcftools (`bcftolls +liftover`) using the Ensembl chain files.
-- Incoming variant requests from external nodes should be routed to port 5000 on the server hosting the Docker setup. Nginx will verify the client's certificate and then redirect the request to the variant server container. Server SSL encryption is achieved using a certificate signed by the network's own CA certificate. Client certificate verification is performed using the nginx ssl_verify_client directive with a certificate also signed by the network's own CA certificate. This setup ensures dedicated two-way SSL encryption between communicating nodes.
+- Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the query variant on genes, transcripts and proteins. Results are displayed on-the-fly in the frontend.
+- If requested, variant liftover will be performed on the fly with bcftools (`bcftools +liftover`) using the Ensembl chain files.
+- Incoming variant requests from external nodes should be routed to port 5000 of the server hosting the Docker setup. SSL encryption is carried out using a certificate signed by the Network’s Own CA Root Certificate. Nginx will verify client's certificate and then redirect the request to the variant-server container. Client certificate verification is performed using the nginx ssl_verify_client directive pointing to the Network’s Own CA Root Certificate. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
 
 ![xicvar-node](https://github.com/marcpybus/xicvar-node/assets/12168869/b079d9df-204c-400a-b765-894f2f768dbf)
 
@@ -25,11 +25,15 @@ docker compose up --build -d
 docker compose logs -f
 ```
 ### Setup
-- Modify the `.env` file with specific details of your node:
+- Modify the `.env` file with the specific details of your node:
     - Network name
     - Node name
     - Configuration filenames
-- The default installation comes with self-signed certificates to encrypt requests from users within the institution private network. Files are located in `nginx/server-certificates/`. Feel free to change them and use certificates signed by your institutions' CA.
+- The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to change them and use a properly configured certificate signed by your institutions' CA.
+
+### Institution WAF setup
+- Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup.
+- Client certificate should be forwarded or added to the x-client-certificate header to allow client authentication.
 
 ### IMPORTANT
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
@@ -44,7 +48,7 @@ The first time the web-server container is run, approximately 46 Gb of data will
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh37_to_GRCh38.chain.gz`
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh38_to_GRCh37.chain.gz`
 
-\* Data downloading process can be tracked in docker container logs
+\* Data downloading process can be tracked in the docker container logs
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-loader** container:
