@@ -1,12 +1,12 @@
 # xicvar-node
 
-*xicvar-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It mainly consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL encryptation for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*xicvar-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
-*xicvar-node* is intended to run within the private network of an institution, so that the frontend is accessible only to the users of the institution:
+*xicvar-node* is intended to run within the private network (LAN) of an institution, so that the frontend is accessible only to the users of the institution:
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
-- Ensembl's VEP is used to annotate the effect and consequence of the query variant on genes, transcripts and proteins. The results are displayed on-the-fly in the frontend.
-- If requested, the variant liftover will be performed on the fly with bcftools (`bcftolls +liftover`) using the Ensembl chain files.
+- Ensembl's VEP is used to annotate the effect and consequence of the query variant on genes, transcripts and proteins. Results are displayed on-the-fly in the frontend.
+- If requested, variant liftover will be performed on the fly with bcftools (`bcftolls +liftover`) using the Ensembl chain files.
 - Incoming variant requests from external nodes should be routed to port 5000 on the server hosting the Docker setup. Nginx will verify the client's certificate and then redirect the request to the variant server container. Server SSL encryption is achieved using a certificate signed by the network's own CA certificate. Client certificate verification is performed using the nginx ssl_verify_client directive with a certificate also signed by the network's own CA certificate. This setup ensures dedicated two-way SSL encryption between communicating nodes.
 
 ![xicvar-node](https://github.com/marcpybus/xicvar-node/assets/12168869/b079d9df-204c-400a-b765-894f2f768dbf)
