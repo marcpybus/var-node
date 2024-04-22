@@ -6,7 +6,7 @@
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
 - Ensembl's VEP is used to annotate the effect and consequence of the query variant on genes, transcripts and proteins. The results are displayed on-the-fly in the frontend.
-- If requested, the variant liftover will be performed on the fly with Crossmap using the Ensembl chain files.
+- If requested, the variant liftover will be performed on the fly with bcftools (`bcftolls +liftover`) using the Ensembl chain files.
 - Incoming variant requests from external nodes should be routed to port 5000 on the server hosting the Docker setup. Nginx will verify the client's certificate and then redirect the request to the variant server container. Server SSL encryption is achieved using a certificate signed by the network's own CA certificate. Client certificate verification is performed using the nginx ssl_verify_client directive with a certificate also signed by the network's own CA certificate. This setup ensures dedicated two-way SSL encryption between communicating nodes.
 
 ![xicvar-node (4)](https://github.com/marcpybus/xicvar-node/assets/12168869/ffe8b123-57f6-495d-b4e3-07a208c3e010)
