@@ -24,6 +24,13 @@ cd xicvar-node
 docker compose up --build -d
 docker compose logs -f
 ```
+### Setup
+- Modify the `.env` file with specific details of your node:
+    - Network name
+    - Node name
+    - Configuration filenames
+- The default installation comes with self-signed certificates to encrypt requests from users within the institution private network. Files are located in `nginx/server-certificates/`. Feel free to change them and use certificates signed by your institutions' CA.
+
 ### IMPORTANT
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
 The first time the web-server container is run, approximately 46 Gb of data will be downloaded and saved in `data/`:
