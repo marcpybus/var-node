@@ -9,7 +9,7 @@
 - If requested, the variant liftover will be performed on the fly with bcftools (`bcftolls +liftover`) using the Ensembl chain files.
 - Incoming variant requests from external nodes should be routed to port 5000 on the server hosting the Docker setup. Nginx will verify the client's certificate and then redirect the request to the variant server container. Server SSL encryption is achieved using a certificate signed by the network's own CA certificate. Client certificate verification is performed using the nginx ssl_verify_client directive with a certificate also signed by the network's own CA certificate. This setup ensures dedicated two-way SSL encryption between communicating nodes.
 
-![xicvar-node (4)](https://github.com/marcpybus/xicvar-node/assets/12168869/ffe8b123-57f6-495d-b4e3-07a208c3e010)
+![xicvar-node](https://github.com/marcpybus/xicvar-node/assets/12168869/b079d9df-204c-400a-b765-894f2f768dbf)
 
 ### Installation and configuration
 #### Requeriments
@@ -49,7 +49,7 @@ or using docker compose:
 cd xicvar-node
 docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 ```
-- Uncompressed or bgzip-compressed VCF file are allowed and the reference genome version (grch37 or grch38) have to be specified.
+- Only uncompressed or bgzip-compressed VCF file are allowed, and the reference genome version (grch37 or grch38) have to be specified.
 - Variants from samples that are present in the databse won't be uploaded. You should merge all the VCF files from a given sample and reupload them to the database.
 - Only variants mapped to primary assembled chromosomes are inserted into the database: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT
 - Variants with hg19/hg38 chromosome names will be lift over to their equivalent GRCh37/GRCh38 chromosome names.
