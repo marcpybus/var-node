@@ -9,9 +9,16 @@ import time
 password = os.environ['MARIADB_ROOT_PASSWORD']
 db = os.environ['MARIADB_DATABASE']
 
+reference_genome = sys.argv[1]
+
+if reference_genome not in ["grch37","grch38"]:
+    print(f"Argument must be either 'grch37' or 'grch38'", file=sys.stderr)
+    sys.exit(1)
+
 # ARE YOU SURE?
 if input("Are you sure you want to remove all the data in the database? (y/n) ") != "y":
-    exit(0)
+    print(f"Error connecting to the database: {e}", file=sys.stderr)
+    sys.exit(0)
 
 # MAIN WORKFLOW
 
@@ -28,17 +35,16 @@ except mariadb.Error as e:
 
 cur = conn.cursor() 
 
-
-print("Removing ALL genomes from avalaible_genomes table... please wait..", file=sys.stderr)
+print("Removing ALL genomes from " + reference_genome + " in the avalaible_genomes table... please wait..", file=sys.stderr)
 try:
-    cur.execute("DELETE FROM avalaible_genomes") 
+    cur.execute("DELETE FROM avalaible_genomes WHERE genome = '" + reference_genome + "'") 
 except mariadb.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 
-print("Removing ALL genotypes from vcf_genotypes table... please wait..", file=sys.stderr)
+print("Removing ALL genotypes from " + reference_genome + " in the vcf_genotypes table... please wait..", file=sys.stderr)
 try:
-    cur.execute("DELETE FROM vcf_genotypes") 
+    cur.execute("DELETE FROM vcf_genotypes WHERE genome = '" + reference_genome + "'") 
 except mariadb.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)

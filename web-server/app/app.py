@@ -17,7 +17,7 @@ CERT = '/network-configuration/cert.pem'
 KEY = '/network-configuration/key.pem'
 CACERT = '/network-configuration/ca-cert.pem'
 NODES = '/network-configuration/nodes.json'
-TIMEOUT = None
+TIMEOUT = 30
 
 SUPPORTED_CHROMOSOMES = {
     "chr1": "1",    "chr2": "2",    "chr3": "3",    "chr4": "4",    "chr5": "5",
@@ -32,13 +32,13 @@ SUPPORTED_GENOMES = {
         "cache":"/data/grch37/vep_cache",
         "fasta":"/data/grch37/fasta/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz",
         "assembly": "GRCh37",
-        "liftover": "/data/liftover/GRCh37_to_GRCh38.chain.gz"
+        "liftover_chain": "/data/liftover/GRCh37_to_GRCh38.chain.gz"
         },
     "grch38":{
         "cache":"/data/grch38/vep_cache",
         "fasta":"/data/grch38/fasta/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
         "assembly": "GRCh38",
-        "liftover": "/data/liftover/GRCh38_to_GRCh37.chain.gz"
+        "liftover_chain": "/data/liftover/GRCh38_to_GRCh37.chain.gz"
         }
     }
 
@@ -76,9 +76,9 @@ def validate_variant_id_format( variant_id_data ):
 def variant_id_normalization(variant_id_data):
     with tempfile.TemporaryDirectory() as temp_dir:
         with open(temp_dir + "/input.vcf", 'w') as f:
-            f.write("##fileformat=VCFv4.2\n##FORMAT=<ID=GT,Number=1,Type=String,Description='Genotype'>\n##contig=<ID="+variant_id_data["chromosome"]+",length=10000000000>\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\ttFILTER\tINFO\tFORMAT\tSAMPLE\n"+variant_id_data["chromosome"]+"\t"+variant_id_data["position"]+"\t.\t"+variant_id_data["reference"]+"\t"+variant_id_data["alternative"]+"\t.\tPASS\t.\tGT\t0/1")
+            f.write("##fileformat=VCFv4.2\n##FORMAT=<ID=GT,Number=1,Type=String,Description='Genotype'>\n##contig=<ID="+variant_id_data["chromosome"]+",length=10000000000>\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"+variant_id_data["chromosome"]+"\t"+variant_id_data["position"]+"\t.\t"+variant_id_data["reference"]+"\t"+variant_id_data["alternative"]+"\t.\tPASS\t.\tGT\t0/1")
             f.close()
-        output = subprocess.run(['bcftools','norm','--fasta-ref',SUPPORTED_GENOMES[variant_id_data["genome"]]["fasta"],'--check-ref','wx', temp_dir + "/input.vcf"], capture_output=True, text=True, )
+        output = subprocess.run(['/bcftools-1.20/bcftools','norm','--fasta-ref',SUPPORTED_GENOMES[variant_id_data["genome"]]["fasta"],'--check-ref','wx', temp_dir + "/input.vcf"], capture_output=True, text=True, )
         if "REF_MISMATCH" in output.stderr:
             for line in output.stderr.split("\n"):
                 if line.startswith("REF_MISMATCH"):
@@ -148,21 +148,31 @@ def make_lift_over(variant_id_data):
         variant_id_data["validation"] = "Incorrect reference genome at liftover" 
     if variant_id_data["new_genome"]:
         with tempfile.TemporaryDirectory() as temp_dir:
-            with open(temp_dir + "/input.bed", 'w') as f:
-                f.write(variant_id_data["chromosome"] + " " + variant_id_data["position"] + " " + variant_id_data["position"] + "\n")
+            with open(temp_dir + "/input.vcf", 'w') as f:
+                f.write("##fileformat=VCFv4.2\n##FORMAT=<ID=GT,Number=1,Type=String,Description='Genotype'>\n##contig=<ID="+variant_id_data["chromosome"]+",length=10000000000>\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"+variant_id_data["chromosome"]+"\t"+variant_id_data["position"]+"\t.\t"+variant_id_data["reference"]+"\t"+variant_id_data["alternative"]+"\t.\tPASS\t.\tGT\t0/1")
                 f.close()
-            output = subprocess.run(["CrossMap","bed",SUPPORTED_GENOMES[variant_id_data["genome"]]["liftover"],temp_dir + "/input.bed","/dev/stdout"], capture_output=True, text=True)
-            bed = output.stdout
-            bed_list = bed.split("\t")
-            variant_id_data["new_variant_id"] = bed_list[0] + "-" + bed_list[1] + "-" + variant_id_data["reference"] + "-" + variant_id_data["alternative"]
+            output = subprocess.run(["/bcftools-1.20/bcftools","+liftover",temp_dir + "/input.vcf","--","-s",SUPPORTED_GENOMES[variant_id_data["genome"]]["fasta"],"-f",SUPPORTED_GENOMES[variant_id_data["new_genome"]]["fasta"],"-c",SUPPORTED_GENOMES[variant_id_data["genome"]]["liftover_chain"]], capture_output=True, text=True)
+            if "Error" in output.stderr:
+                for line in output.stderr.split("\n"):
+                    if line.startswith("Error"):
+                        variant_id_data["validation"] = line.replace("\t"," ")
+            else:
+                for line in output.stdout.split("\n"):
+                    if line.startswith(variant_id_data["chromosome"]):
+                        vcf_line_list = line.split("\t")
+                        variant_id_data["new_chromosome"] = vcf_line_list[0]
+                        variant_id_data["new_position"] = vcf_line_list[1]
+                        variant_id_data["new_reference"] = vcf_line_list[3]
+                        variant_id_data["new_alternative"] = vcf_line_list[4]
+                        variant_id_data["new_variant_id"] = variant_id_data["new_chromosome"] + "-" + variant_id_data["new_position"] + "-" + variant_id_data["new_reference"] + "-" + variant_id_data["new_alternative"]
     return variant_id_data
 
 async def make_request(session, node, genome, variant_id):
     if genome and variant_id:
-        url = 'https://' + node["node_host"] + '/' + genome + '/' + variant_id
+        url = 'https://' + node["node_host"] + ':' + node["node_port"] + '/' + genome + '/' + variant_id
     else:
-        url = 'https://' + node["node_host"] + '/info'
-    return await session.get( url)
+        url = 'https://' + node["node_host"] + ':' + node["node_port"] + '/info'
+    return await session.get( url )
 
 async def get_data_from_nodes(genome, variant_id):
     data = []
@@ -176,6 +186,7 @@ async def get_data_from_nodes(genome, variant_id):
             node = {}
             node["node_name"] = nodes[idx]["node_name"]
             node["node_host"] = nodes[idx]["node_host"]
+            node["node_port"] = nodes[idx]["node_port"]
             node["database_genomes"] = []
             if hasattr(r,"status_code"):
                 if r.status_code == httpx.codes.OK:

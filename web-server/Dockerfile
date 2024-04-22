@@ -5,7 +5,7 @@ FROM ubuntu:22.04
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Madrid
 RUN apt update && \
-    apt install -y samtools bcftools default-jre wget curl tabix python3-pip gunicorn python3-gevent python3-pysam python3-requests git build-essential \
+    apt install -y samtools libcurl4 libcurl4-openssl-dev bcftools default-jre wget curl tabix python3-pip gunicorn python3-gevent python3-pysam python3-requests git build-essential \
     libdbi-perl libdbd-mysql-perl libarchive-zip-perl libhttp-tiny-perl libwww-perl \
     libarchive-extract-perl libbz2-dev liblzma-dev zlib1g-dev libmodule-build-perl && \
     apt-get clean && \
@@ -24,6 +24,15 @@ RUN git clone https://github.com/Ensembl/ensembl-vep.git && \
 
 # DOWNLOAD PICARD
 RUN mkdir -p /picard && wget -O /picard/picard.jar https://github.com/broadinstitute/picard/releases/download/2.25.1/picard.jar
+
+# INSTALL BCFTOOLS +LIFTOVER
+RUN wget https://github.com/samtools/bcftools/releases/download/1.20/bcftools-1.20.tar.bz2 && \
+    tar xjvf /bcftools-1.20.tar.bz2 && \
+    wget -O /bcftools-1.20/plugins/liftover.c https://github.com/freeseek/score/raw/master/liftover.c && \
+    cd /bcftools-1.20 && make
+
+ENV PATH="${PATH}:/bcftools-1.20"
+ENV BCFTOOLS_PLUGINS="/bcftools-1.20/plugins"
 
 COPY --chmod=755 ../docker-entrypoint.sh /docker-entrypoint/docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint/docker-entrypoint.sh"]

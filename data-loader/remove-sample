@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+import mariadb
+import pysam
+import sys
+import os
+import time
+
+password = os.environ['MARIADB_ROOT_PASSWORD']
+db = os.environ['MARIADB_DATABASE']
+
+reference_genome = sys.argv[1]
+sample = sys.argv[2]
+
+if reference_genome not in ["grch37","grch38"]:
+    print(f"First argument must be either 'grch37' or 'grch38'", file=sys.stderr)
+    sys.exit(1)
+
+if sample == "":
+    print(f"Second argument can't be empty", file=sys.stderr)
+    sys.exit(1)
+
+# ARE YOU SURE?
+if input("Are you sure you want to remove all the data in the database? (y/n) ") != "y":
+    print(f"Error connecting to the database: {e}", file=sys.stderr)
+    sys.exit(0)
+
+# MAIN WORKFLOW
+
+try:
+    conn = mariadb.connect(
+        user="root",
+        password=password,
+        host="mariadb",
+        database=db,
+        autocommit=True )
+except mariadb.Error as e:
+   print(f"Error connecting to the database: {e}", file=sys.stderr)
+   sys.exit(1)
+
+cur = conn.cursor() 
+
+print("Removing ALL genotypes from " + reference_genome + " belonging to sample " + sample + " in the vcf_genotypes table... please wait..", file=sys.stderr)
+try:
+    cur.execute("DELETE FROM vcf_genotypes WHERE genome = '" + reference_genome + "' AND sample = '" + sample + "'") 
+except mariadb.Error as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)
+
+print("Finished!", file=sys.stderr)
