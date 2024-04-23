@@ -49,11 +49,11 @@ The first time the web-server container is run, approximately 46 Gb of data will
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-loader** container:
 ```console
-docker exec -i xicvar-node-data-loader-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
+docker exec -i VarNode-data-loader-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
 ```
 or using docker compose:
 ```console
-cd xicvar-node
+cd VarNode
 docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 ```
 - Only uncompressed or bgzip-compressed VCF file are allowed, and the reference genome version (grch37 or grch38) have to be specified.
@@ -66,17 +66,17 @@ docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 #### Load chromosome 10 genotypes from 1000genomes 
 ```console
 wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
-docker exec -i xicvar-node-data-loader-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
+docker exec -i VarNode-data-loader-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 ```
 
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
 ```console
-docker exec -i xicvar-node-data-loader-1 remove-sample <grch37|grch38> <sample_name>
+docker exec -i VarNode-data-loader-1 remove-sample <grch37|grch38> <sample_name>
 ```
 Or alternatively, you can reset the whole database:
 ```console
-docker exec -i xicvar-node-data-loader-1 remove-all-variants <grch37|grch38> 
+docker exec -i VarNode-data-loader-1 remove-all-variants <grch37|grch38> 
 ```
 \* In both cases is necessary to specify the reference genome from which the variants will be removed.
 
@@ -101,23 +101,23 @@ Proper configuration of SSL certificates is essential to make **VarNode** a secu
 
 #### Generate the network's CA Root Certificate and Key
 ```console
-docker exec -it xicvar-node-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
+docker exec -it VarNode-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
 - use a "very-long" passphrase to encript the key
 - <Network-Own-CA> use the name of your network of nodes
-- certificate expiration is set to 100 years!
+\* certificate expiration is set to 100 years!
 
 #### Generate server Key and Certificate Signing Request
 ```console
-docker exec -it xicvar-node-web-server-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
+docker exec -it VarNode-web-server-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
 #### Sign server Certificate Signing Request with the Certificate Authority's Certificate and Key
 ```console
-docker exec -it xicvar-node-web-server-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker exec -it VarNode-web-server-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - <XXX.XXX.XXX.XXX> use your public IP
 - <domain.fqdn> use your domain FQDN 
-- certificate expiration is set to 100 years!
+\* certificate expiration is set to 100 years!
 
 ### Institution WAF configuration
 Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup. Two different approaches can be configured with nginx, dependening on the preferences of your institution WAF administrator.
