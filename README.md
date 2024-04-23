@@ -67,6 +67,12 @@ docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 - Variants will be left-aligned and normalized, and multiallelic sites will be splitted into biallelic records with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`
 - Variants containing * (star) or . (missing) alleles won't be included in the database.
 
+#### Load chromosome 10 genotypes from 1000genomes 
+```console
+wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
+docker exec -i xicvar-node-data-loader-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
+```
+
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
 ```console
