@@ -82,7 +82,6 @@ docker exec -i xicvar-node-data-loader-1 remove-all-variants <grch37|grch38>
 
 ### Network node configuration
 The default configuration have dummy certificates configured so the nginx container (IP: 172.18.0.6 / Domain: nginx / Port: 5000) can be queried without further configuration. A fake node pointing to google.com is also configured for testing purposes:
-`network-configuration/nodes.json`
 ```
 [
     {"node_name":"DOCKER_NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
@@ -121,7 +120,7 @@ docker exec -it xicvar-node-web-server-1 openssl x509 -req -extfile <(printf "su
 - certificate expiration is set to 100 years!
 
 ### Institution WAF configuration
-Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup. Two different approaches can be configured with nginx dependening on the preferences of your institution IT administrator.
+Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup. Two different approaches can be configured with nginx, dependening on the preferences of your institution WAF administrator.
 
 #### SSL Passthrough
 As the name suggests, traffic is simply passed through the WAF without being decrypted and to the port 5000 of the server hosting the Docker setup . This is the easiest configuration as it doesn't requires to reconfigure the WAF by the IT administrator every time the certificates are renewed. This option transfers a higher responsability to the person managing the node, as any putative malicious traffic is also redirected to the node, but it is considered more secure to thrid party manipulations and tdoesn't required maintenance from the WAF administrator.
