@@ -31,10 +31,6 @@ docker compose logs -f
     - Configuration filenames
 - The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to change them and use a properly configured certificate signed by your institutions' CA.
 
-### Institution WAF setup
-- Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup.
-- Client certificate should be forwarded or added to the x-client-certificate header to allow client authentication.
-
 ### IMPORTANT
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
 The first time the web-server container is run, approximately 46 Gb of data will be downloaded and saved in `data/`:
@@ -84,7 +80,7 @@ docker exec -i xicvar-node-data-loader-1 remove-all-variants <grch37|grch38>
 ```
 \* In both cases is necessary to specify the reference genome from which the variants will be removed.
 
-### Network configuration
+### Network node configuration
 The default configuration have dummy certificates configured so the nginx container (IP: 172.18.0.6 / Domain: nginx / Port: 5000) can be queried without further configuration. A fake node pointing to google.com is also configured for testing purposes:
 `network-configuration/nodes.json`
 ```
@@ -95,24 +91,43 @@ The default configuration have dummy certificates configured so the nginx contai
 ]
 ```
 
-Modify `network-configuration/nodes.json`
+Modify `network-configuration/nodes.json` to include the domain names or IPs from the nodes you want to connect with.
 
+### Network certificate configuration
+Proper configuration of SSL certificates is essential to make **VarNode** a secure way to exchange variant information:
+- It is necessary to generate a single CA root certificate and key that will be used to sign all certificates used to encrypt and authenticate communication between nodes. Use a long passphrase for the key.
+- The validity of the certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
+- The key and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes that provide their Certificate Signing Request file.
+- This CA root certificate should be distributed to each configured node along with the signed certificate.
 
-#### Creating the Certificate Authority's Certificate and Key
+#### Generate the network's CA Root Certificate and Key
 ```console
-openssl req -x509 -newkey rsa:4096 -subj '/CN=Network-Own-CA' -keyout ca-key.pem -out ca-cert.pem -days 36500
+docker exec -it xicvar-node-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
 - use a "very-long" passphrase to encript the key
+- <Network-Own-CA> use the name of your network of nodes
 - certificate expiration is set to 100 years!
 
-#### Creating the Server/Client Key and Certificate Signing Request
+#### Generate server Key and Certificate Signing Request
 ```console
-openssl req -noenc -newkey rsa:4096 -keyout key.pem -out server-cert.csr
+docker exec -it xicvar-node-web-server-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
-#### Signing the Server/Client Certificate Signing Request with the Certificate Authority's Certificate and Key
+#### Sign server Certificate Signing Request with the Certificate Authority's Certificate and Key
 ```console
-openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in server-cert.csr -CA ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out cert.pem
+docker exec -it xicvar-node-web-server-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - <XXX.XXX.XXX.XXX> use your public IP
 - <domain.fqdn> use your domain FQDN 
 - certificate expiration is set to 100 years!
+
+### Institution WAF configuration
+Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup. Two different approaches can be configured with nginx dependening on the preferences of your institution IT administrator.
+
+#### SSL Passthrough
+As the name suggests, traffic is simply passed through the WAF without being decrypted and to the port 5000 of the server hosting the Docker setup . This is the easiest configuration as it doesn't requires to reconfigure the WAF by the IT administrator every time the certificates are renewed. This option transfers a higher responsability to the person managing the node, as any putative malicious traffic is also redirected to the node, but it is considered more secure to thrid party manipulations and tdoesn't required maintenance from the WAF administrator.
+
+#### SSL Bridging (and Offloading)
+This option requires the WAF to be configured with the network's CA and server certificates to perform client verification during the process of SSL offloading. Traffic is then redirected to the port 5000 of the server hosting the Docker setup. Additionally nginx should be configured to accept only requests from the WAF's IP, which would avoid querying the variant-server from within the institution's private network or LAN. As mentioned above, any new issue of certificates would require intervention of the WAF administrator. This configuration could be more easily manipulated by a thrird party (WAF administrator) and it is considerated as a less secure option.
+
+### Credit
+@marcpybus
