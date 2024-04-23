@@ -1,4 +1,4 @@
-# VarNode
+# VarNode (**beta**)
 
 *VarNode* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
