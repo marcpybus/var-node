@@ -19,8 +19,8 @@
 
 #### Installation
 ```console
-git clone https://github.com/marcpybus/xicvar-node.git
-cd xicvar-node
+git clone https://github.com/marcpybus/VarNode.git
+cd VarNode
 docker compose up --build -d
 docker compose logs -f
 ```
