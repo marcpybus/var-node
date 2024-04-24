@@ -25,7 +25,7 @@ CREATE TABLE `vcf_samples` (
   `sample_details` VARCHAR(5000),
   PRIMARY KEY (`genome`,`sample`),
   KEY `by_genome` (`genome`),
-  KEY `by_sample` (`sample`),
+  KEY `by_sample` (`sample`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `available_genomes` (
