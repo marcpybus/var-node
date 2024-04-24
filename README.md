@@ -9,7 +9,7 @@
 - If requested, variant liftover will be performed on the fly with bcftools (`bcftools +liftover`) using the Ensembl chain files.
 - Incoming variant requests from external nodes should be routed to port 5000 of the server hosting the Docker setup. SSL encryption is carried out using a certificate signed by the Network’s Own CA Root Certificate. Nginx will verify client's certificate and then redirect the request to the variant-server container. Client certificate verification is performed using the nginx ssl_verify_client directive pointing to the Network’s Own CA Root Certificate. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
 
-![xicvar-node](https://github.com/marcpybus/var-node/assets/12168869/4a99931e-f240-4977-8ab6-0dd3b311214c)
+![var-node-schema](https://github.com/marcpybus/var-node/assets/12168869/7bbdee09-7fce-45d0-902f-0169924435ac)
 
 ### Installation and configuration
 #### Requeriments
