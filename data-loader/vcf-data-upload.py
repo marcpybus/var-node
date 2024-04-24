@@ -70,11 +70,11 @@ except mariadb.Error as e:
     print(f"Error connecting to the database: {e}", file=sys.stderr)
     sys.exit(1)
 
-cur = conn.cursor() 
+cur = conn.cursor(dictionary=True) 
 
 for ref_sample in all_samples.copy():
     try:
-            cur.execute( " SELECT sample FROM vcf_genotypes WHERE sample = ? AND genome = ? LIMIT 1", [ ref_sample, genome ] )
+            cur.execute( " SELECT sample FROM vcf_samples WHERE sample = ? AND genome = ? ", [ ref_sample, genome ] )
             for row in cur:
                 existing_sample = row["sample"]
                 all_samples.remove( existing_sample )

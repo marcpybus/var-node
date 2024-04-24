@@ -19,6 +19,15 @@ CREATE TABLE `vcf_genotypes` (
   KEY `by_alt` (`alt`(10))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `vcf_samples` (
+  `genome` VARCHAR(6) NOT NULL,
+  `sample` VARCHAR(50) NOT NULL,
+  `sample_details` VARCHAR(5000),
+  PRIMARY KEY (`genome`,`sample`),
+  KEY `by_genome` (`genome`),
+  KEY `by_sample` (`sample`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE `available_genomes` (
   `genome` VARCHAR(6) NOT NULL,
   PRIMARY KEY (`genome`)

@@ -21,7 +21,7 @@ if sample == "":
     sys.exit(1)
 
 # ARE YOU SURE?
-if input("Are you sure you want to remove all the data in the database? (y/n) ") != "y":
+if input("Are you sure you want to remove the data from " + sample + " in the database " + reference_genome + "? (y/n) ") != "y":
     print(f"Error connecting to the database: {e}", file=sys.stderr)
     sys.exit(0)
 
@@ -43,6 +43,13 @@ cur = conn.cursor()
 print("Removing ALL genotypes from " + reference_genome + " belonging to sample " + sample + " in the vcf_genotypes table... please wait..", file=sys.stderr)
 try:
     cur.execute("DELETE FROM vcf_genotypes WHERE genome = '" + reference_genome + "' AND sample = '" + sample + "'") 
+except mariadb.Error as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)
+
+print("Removing sample " + sample + " from vcf_samples table... please wait..", file=sys.stderr)
+try:
+    cur.execute("DELETE FROM vcf_samples WHERE genome = '" + reference_genome + "' AND sample = '" + sample + "'") 
 except mariadb.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
