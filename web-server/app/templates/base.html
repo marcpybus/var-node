@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>xicvar-node</title>
+    <title>var-node</title>
   </head>
   <script src="{{ url_for('static', filename='jquery-3.5.1.min.js') }}"></script>
   <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
@@ -214,7 +214,7 @@
             <div class="panel-heading">
               <div class="row">
                 <div class="col-xs-10 text-left">
-                  <h3>xicvar-node</h3>
+                  <h3>VarNode - Xarxa Interhospitalària Catalana de Variants Genétiques</h3>
                 </div>
                 <div class="col-xs-2 text-right">
                   <div class="text-right" id="spinner"></div>
@@ -317,7 +317,7 @@
                   </div>
                   <div class="row top-buffer">
                     <div class="col-xs-12 text-left">
-                      - all the variants in the database have been left-aligned and normalized, and multiallelic sites have been splited into biallelic records, using the following Ensembl primary assemblies and command line:              
+                      - all the variants in the database have been left-aligned and normalized, and multiallelic sites have been splited into biallelic records, using the following Ensembl primary assemblies and <code>bcftools norm</code> command line:              
                     </div>
                   </div>
                   <div class="row">
@@ -337,7 +337,7 @@
                   </div>
                   <div class="row top-buffer">
                     <div class="col-xs-12 text-left">
-                      - queried variant normalization is performed on-the-fly using bcftools:           
+                      - queried variant normalization is performed on-the-fly using <code>bcftools norm</code>:           
                     </div>
                   </div>
                   <div class="row">
@@ -362,7 +362,7 @@
                   </div>
                   <div class="row top-buffer">
                     <div class="col-xs-12 text-left">
-                      - queried variant liftover is performed on-the-fly using Crossmap with the following chain files:          
+                      - queried variant liftover is performed on-the-fly using <code>bcftools +liftover</code> with the following chain files:          
                     </div>
                   </div>
                   <div class="row">

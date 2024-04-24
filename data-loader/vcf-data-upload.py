@@ -79,10 +79,10 @@ for ref_sample in all_samples.copy():
                 existing_sample = row["sample"]
                 all_samples.remove( existing_sample )
                 print("", file=sys.stderr)
-                print("ATTENTION! Sample " + existing_sample + " is already present in the " + genome + " database. IT WILL BE SKIPPED!", file=sys.stderr)
+                print("ATTENTION! Sample " + existing_sample + " is already present in the " + genome + " database. UPLOAD WILL BE SKIPPED!", file=sys.stderr)
                 print("  - Uploading genotypes from samples that already exists in the database is prohibited as it may lead to duplication of genotypes. ", file=sys.stderr)
                 print("  - You should merge all the VCF files from the same sample into one, manually curate all duplicated genotypes and re-upload the resulting VCF file. You can do this with bcftools software ", file=sys.stderr)
-                print("  - Before re-uploading the data you need remove this sample from the " + genome + " database using the following command: < WRITE FINAL COMMAND > ", file=sys.stderr)
+                print("  - Before re-uploading the data you need remove this sample from the " + genome + " database using the following command: docker exec -i xicvar-node-data-loader-1 remove-sample " + genome + " " + existing_sample + " ", file=sys.stderr)
     except mariadb.Error as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
