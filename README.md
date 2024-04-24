@@ -1,15 +1,15 @@
-# VarNode (**beta**)
+# var-node (**beta**)
 
-*VarNode* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
-*VarNode* is intended to run within the private network (LAN) of an institution, so that the frontend is accessible only to the users of the institution:
+*var-node* is intended to run within the private network (LAN) of an institution, so that the frontend is accessible only to the users of the institution:
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
 - Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are displayed on-the-fly in the frontend.
 - If requested, variant liftover will be performed on the fly with bcftools (`bcftools +liftover`) using the Ensembl chain files.
 - Incoming variant requests from external nodes should be routed to port 5000 of the server hosting the Docker setup. SSL encryption is carried out using a certificate signed by the Network’s Own CA Root Certificate. Nginx will verify client's certificate and then redirect the request to the variant-server container. Client certificate verification is performed using the nginx ssl_verify_client directive pointing to the Network’s Own CA Root Certificate. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
 
-![xicvar-node](https://github.com/marcpybus/VarNode/assets/12168869/4a99931e-f240-4977-8ab6-0dd3b311214c)
+![xicvar-node](https://github.com/marcpybus/var-node/assets/12168869/4a99931e-f240-4977-8ab6-0dd3b311214c)
 
 ### Installation and configuration
 #### Requeriments
@@ -19,8 +19,8 @@
 
 #### Installation
 ```console
-git clone https://github.com/marcpybus/VarNode.git
-cd VarNode
+git clone https://github.com/marcpybus/var-node.git
+cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
@@ -49,11 +49,11 @@ The first time the web-server container is run, approximately 46 Gb of data will
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-loader** container:
 ```console
-docker exec -i VarNode-data-loader-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
+docker exec -i var-node-data-loader-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
 ```
 or using docker compose:
 ```console
-cd VarNode
+cd var-node
 docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 ```
 - Only uncompressed or bgzip-compressed VCF file are allowed, and the reference genome version (grch37 or grch38) have to be specified.
@@ -66,17 +66,17 @@ docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 #### Load chromosome 10 genotypes from 1000genomes 
 ```console
 wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
-docker exec -i VarNode-data-loader-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
+docker exec -i var-node-data-loader-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 ```
 
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
 ```console
-docker exec -i VarNode-data-loader-1 remove-sample <grch37|grch38> <sample_name>
+docker exec -i var-node-data-loader-1 remove-sample <grch37|grch38> <sample_name>
 ```
 Or alternatively, you can reset the whole database:
 ```console
-docker exec -i VarNode-data-loader-1 remove-all-variants <grch37|grch38> 
+docker exec -i var-node-data-loader-1 remove-all-variants <grch37|grch38> 
 ```
 \* In both cases is necessary to specify the reference genome from which the variants will be removed.
 
@@ -93,7 +93,7 @@ The default configuration have dummy certificates configured so the nginx contai
 Modify `network-configuration/nodes.json` to include the domain names or IPs from the nodes you want to connect with.
 
 ### Network certificate configuration
-Proper configuration of SSL certificates is essential to make **VarNode** a secure way to exchange variant information:
+Proper configuration of SSL certificates is essential to make **var-node** a secure way to exchange variant information:
 - It is necessary to generate a single CA root certificate and key that will be used to sign all certificates used to encrypt and authenticate communication between nodes. Use a long passphrase for the key.
 - The validity of the certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
 - The key and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes that provide their Certificate Signing Request file.
@@ -101,7 +101,7 @@ Proper configuration of SSL certificates is essential to make **VarNode** a secu
 
 #### Generate the network's CA Root Certificate and Key
 ```console
-docker exec -it VarNode-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
+docker exec -it var-node-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
 - use a "very-long" passphrase to encript the key
 - <Network-Own-CA> use the name of your network of nodes
@@ -109,11 +109,11 @@ docker exec -it VarNode-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '/
 
 #### Generate server Key and Certificate Signing Request
 ```console
-docker exec -it VarNode-web-server-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
+docker exec -it var-node-web-server-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
 #### Sign server Certificate Signing Request with the Certificate Authority's Certificate and Key
 ```console
-docker exec -it VarNode-web-server-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker exec -it var-node-web-server-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - <XXX.XXX.XXX.XXX> use your public IP
 - <domain.fqdn> use your domain FQDN 
