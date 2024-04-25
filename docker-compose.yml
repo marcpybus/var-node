@@ -6,11 +6,12 @@ services:
     networks:
       internal:
         ipv4_address: 172.18.0.7
-  data-loader:
-    build: data-loader/.
+  data-manager:
+    build: data-manager/.
     volumes:
-      - ./data-loader/apps:/apps
+      - ./data-manager/apps:/apps
       - ./data:/data
+      - ./network-configuration:/network-configuration
     depends_on:
       data-downloader:
         condition: service_completed_successfully
