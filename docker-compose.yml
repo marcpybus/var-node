@@ -1,16 +1,25 @@
 services:
+  data-loader:
+    build: data-loader/.
+    volumes:
+      - ./data-loader/apps:/apps
+      - ./data:/data
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+    networks:
+      internal:
+        ipv4_address: 172.18.0.4
   web-server:
     build: web-server/.
     restart: always
     volumes:
-      #- ./web-server/app/app.py:/app/app.py
-      #- ./web-server/app/static:/app/static
-      #- ./web-server/app/templates:/app/templates
       - ./web-server/app:/app
-      - ./data/grch37:/data/grch37
-      - ./data/grch38:/data/grch38
-      - ./data/liftover:/data/liftover
+      - ./data:/data
       - ./network-configuration:/network-configuration
+    depens_on:
+      data-loader:
+        condition: service_completed_successfully
     networks:
       internal:
         ipv4_address: 172.18.0.2
@@ -21,39 +30,37 @@ services:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
     volumes:
-      - ./variant-server/app.py:/app/app.py
+      - ./variant-server/app:/app
+    depens_on:
+      data-loader:
+        condition: service_completed_successfully
     networks:
       internal:
         ipv4_address: 172.18.0.3
-  data-loader:
-    build: data-loader/.
-    volumes:
-      - ./data-loader:/apps
-      - ./data/grch37:/data/grch37
-      - ./data/grch38:/data/grch38
-    environment:
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-    networks:
-      internal:
-        ipv4_address: 172.18.0.4
   mariadb:
     build: mariadb/.
     restart: always
     command: --max_allowed_packet=1073741824
-    #command: --max_allowed_packet=1073741824 --innodb_buffer_pool_chunk_size=128M --innodb_buffer_pool_size=16G --innodb_log_buffer_size=1G --innodb_log_file_size=4G --innodb_write_io_threads=15 --innodb_read_io_threads=15 --innodb_flush_log_at_trx_commit=0 --innodb_file_per_table=1 --innodb_flush_method=O_DIRECT --innodb_io_capacity=1000 --innodb_open_files=5000 --query_cache_type=ON --query_cache_size=16M --thread_pool_size=30 --thread_pool_idle_timeout=3600 --thread_handling=pool-of-threads --max_connections=500 --innodb_autoinc_lock_mode=2
-    networks:
-      internal:
-        ipv4_address: 172.18.0.5
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
     volumes:
       - ./data/mariadb-data:/var/lib/mysql
       - ./mariadb/schema-mariadb.sql:/docker-entrypoint-initdb.d/schema-mariadb.sql
+    depens_on:
+      data-loader:
+        condition: service_completed_successfully
+    networks:
+      internal:
+        ipv4_address: 172.18.0.5
   nginx:
     build: nginx/.
     restart: always
+    depens_on:
+      data-loader:
+        condition: service_completed_successfully
+      web-server:
+      variant-server:
     volumes:
       - ./nginx/server-certificates:/server-certificates
       - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
@@ -65,9 +72,6 @@ services:
     networks:
       internal:
         ipv4_address: 172.18.0.6
-    depends_on:
-      - web-server
-      - variant-server
 networks:
   internal:
     ipam:

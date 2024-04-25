@@ -37,7 +37,7 @@ cur = conn.cursor()
 
 print("Removing ALL genomes from " + reference_genome + " in the avalaible_genomes table... please wait..", file=sys.stderr)
 try:
-    cur.execute("DELETE FROM avalaible_genomes WHERE genome = '" + reference_genome + "'") 
+    cur.execute("DELETE FROM available_genomes WHERE genome = '" + reference_genome + "'") 
 except mariadb.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)

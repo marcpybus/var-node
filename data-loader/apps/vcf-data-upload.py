@@ -90,6 +90,32 @@ for ref_sample in all_samples.copy():
 print("", file=sys.stderr)
 print("The following samples will be processed: " + str(all_samples), file=sys.stderr)
 print("", file=sys.stderr)
+
+print("Adding samples...", file=sys.stderr)
+samples_data = []
+for ref_sample in all_samples:
+    samples_data.append( (genome,ref_sample) )
+if( samples_data ):
+    try:
+        conn = mariadb.connect(
+            user="root",
+            password=password,
+            host="mariadb",
+            database=db,
+            autocommit=True )
+    except mariadb.Error as e:
+        print(f"Error connecting to the database: {e}", file=sys.stderr)
+        sys.exit(1)
+    cur = conn.cursor() 
+    try:
+        cur.executemany("INSERT INTO vcf_samples ( genome, sample ) VALUES ( ?, ? )", samples_data) 
+    except mariadb.Error as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+else:
+    print("There are no samples to add..", file=sys.stderr)
+print("", file=sys.stderr)
+
 print("Parsing genotypes...", file=sys.stderr)
 data = []
 count_records = 0

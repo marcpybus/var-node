@@ -1,8 +1,7 @@
 #!/bin/bash
 
 echo "Checking initial configuration..."
-echo "  --> waiting 10 seconds for services to initialize..."
-sleep 10
+sleep 2
 
 echo "Running Docker entrypoint..."
 echo "Fetching VEP caches, Fasta files and liftOver chain files for GRCh37 and GRCh38 genomes (download size ~46Gb):"
@@ -35,6 +34,7 @@ if [ ! -d /data/grch37/vep_cache/homo_sapiens_merged ] || [ ! -f /data/grch37/ve
     mkdir -p /data/grch37/vep_cache
     wget --no-verbose --show-progress --progress=dot:giga -O /data/grch37/vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz http://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz
     tar xzf /data/grch37/vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz -C /data/grch37/vep_cache/
+    rm /data/grch37/vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz
 fi
 echo "    --> OK "
 
@@ -44,6 +44,7 @@ if [ ! -d /data/grch38/vep_cache/homo_sapiens_merged ] || [ ! -f /data/grch38/ve
     mkdir -p /data/grch38/vep_cache
     wget --no-verbose --show-progress --progress=dot:giga -O /data/grch38/vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz http://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz
     tar xzf /data/grch38/vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz -C /data/grch38/vep_cache/
+    rm /data/grch38/vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz
 fi
 echo "    --> OK "
 

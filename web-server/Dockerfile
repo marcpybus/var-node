@@ -34,9 +34,6 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.20/bcftools-1.
 ENV PATH="${PATH}:/bcftools-1.20"
 ENV BCFTOOLS_PLUGINS="/bcftools-1.20/plugins"
 
-COPY --chmod=755 ../docker-entrypoint.sh /docker-entrypoint/docker-entrypoint.sh
-ENTRYPOINT ["/docker-entrypoint/docker-entrypoint.sh"]
-
 # RUN FLASK APP
 WORKDIR /app
 #CMD gunicorn --workers=5 --bind 0.0.0.0:80 app:app
