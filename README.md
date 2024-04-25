@@ -1,6 +1,6 @@
 # var-node (**beta**)
 
-*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-loader**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-manager**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
 *var-node* is intended to run within the private network (LAN) of an institution, so that the frontend is accessible only to the users of the institution:
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
@@ -47,14 +47,14 @@ The first time the web-server container is run, approximately 46 Gb of data will
 \* Data downloading process can be tracked in the docker container logs
 
 ### Loading genomic variants from the database
-Variants from a VCF files can be loaded into the database using the **data-loader** container:
+Variants from a VCF files can be loaded into the database using the **data-manager** container:
 ```console
-docker exec -i var-node-data-loader-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
+docker run -i var-node-data-manager-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
 ```
 or using docker compose:
 ```console
 cd var-node
-docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
+docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
 ```
 - Only uncompressed or bgzip-compressed VCF file are allowed, and the reference genome version (grch37 or grch38) have to be specified.
 - Variants from samples that are present in the databse won't be uploaded. You should merge all the VCF files from a given sample and reupload them to the database.
@@ -63,20 +63,28 @@ docker compose exec -T data-loader vcf-ingestion <grch37|grch38> < file.vcf
 - Variants will be left-aligned and normalized, and multiallelic sites will be splitted into biallelic records with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`
 - Variants containing * (star) or . (missing) alleles won't be included in the database.
 
-#### Load chromosome 10 genotypes from 1000genomes 
+#### Load on variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes VCF
+```console
+cd var-node
+docker compose run -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
+```
+\* it can take few hour to upload
+
+#### Load all chromosome 10 variants from 1000genomes VCF
 ```console
 wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
-docker exec -i var-node-data-loader-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
+docker run -i var-node-data-manager-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 ```
+\* it can take few hour to upload
 
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
 ```console
-docker exec -i var-node-data-loader-1 remove-sample <grch37|grch38> <sample_name>
+docker run -i var-node-data-manager-1 remove-sample <grch37|grch38> <sample_name>
 ```
 Or alternatively, you can reset the whole database:
 ```console
-docker exec -i var-node-data-loader-1 remove-all-variants <grch37|grch38> 
+docker run -i var-node-data-manager-1 remove-all-variants <grch37|grch38> 
 ```
 \* In both cases is necessary to specify the reference genome from which the variants will be removed.
 
@@ -101,7 +109,7 @@ Proper configuration of SSL certificates is essential to make **var-node** a sec
 
 #### Generate the network's CA Root Certificate and Key
 ```console
-docker exec -it var-node-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
+docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
 - use a "very-long" passphrase to encript the key
 - <Network-Own-CA> use the name of your network of nodes
@@ -109,17 +117,17 @@ docker exec -it var-node-web-server-1 openssl req -x509 -newkey rsa:4096 -subj '
 
 #### Generate server Key and Certificate Signing Request
 ```console
-docker exec -it var-node-web-server-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
+docker exec -it var-node-data-manager-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
 #### Sign server Certificate Signing Request with the Certificate Authority's Certificate and Key
 ```console
-docker exec -it var-node-web-server-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey data-managerca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - <XXX.XXX.XXX.XXX> use your public IP
 - <domain.fqdn> use your domain FQDN 
 \* certificate expiration is set to 100 years!
 
-### Institution WAF configuration
+### WAF configuration
 Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup. Two different approaches can be configured with nginx, dependening on the preferences of your institution WAF administrator.
 
 #### SSL Passthrough
