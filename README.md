@@ -25,10 +25,14 @@ docker compose up --build -d
 docker compose logs -f
 ```
 ### Setup
-- Modify the `.env` file with the specific details of your node:
-    - Network name
-    - Node name
-    - Configuration filenames
+- Modify the folowing variables in `.env` file with the specificities of your node:
+    - Network name: `NETWORK_NAME` 
+    - Node name: `NODE_NAME`
+- If your are changing the deafult certificates filenames, please change the folowing variables:
+    - CA Root certificate: `CA_FILENAME` 
+    - CA Root certificate: `CA_FILENAME` 
+    - CA Root certificate: `CA_FILENAME` 
+    - CA Root certificate: `CA_FILENAME` 
 - The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to change them and use a properly configured certificate signed by your institutions' CA.
 
 ### IMPORTANT
