@@ -22,8 +22,4 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.20/bcftools-1.
 
 ENV PATH="${PATH}:/bcftools-1.20"
 ENV BCFTOOLS_PLUGINS="/bcftools-1.20/plugins"
-
 ENV PATH="${PATH}:/apps"
-
-COPY --chmod=755 ./docker-entrypoint.sh /docker-entrypoint.sh
-ENTRYPOINT ["/docker-entrypoint.sh"]
