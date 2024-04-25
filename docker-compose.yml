@@ -1,9 +1,19 @@
 services:
+  data-downloader:
+    build: data-downloader/.
+    volumes:
+      - ./data:/data
+    networks:
+      internal:
+        ipv4_address: 172.18.0.7
   data-loader:
     build: data-loader/.
     volumes:
       - ./data-loader/apps:/apps
       - ./data:/data
+    depends_on:
+      data-downloader:
+        condition: service_completed_successfully
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
@@ -18,7 +28,7 @@ services:
       - ./data:/data
       - ./network-configuration:/network-configuration
     depends_on:
-      data-loader:
+      data-downloader:
         condition: service_completed_successfully
     networks:
       internal:
@@ -32,7 +42,7 @@ services:
     volumes:
       - ./variant-server/app:/app
     depends_on:
-      data-loader:
+      data-downloader:
         condition: service_completed_successfully
     networks:
       internal:
@@ -48,7 +58,7 @@ services:
       - ./data/mariadb-data:/var/lib/mysql
       - ./mariadb/schema-mariadb.sql:/docker-entrypoint-initdb.d/schema-mariadb.sql
     depends_on:
-      data-loader:
+      data-downloader:
         condition: service_completed_successfully
     networks:
       internal:
@@ -57,7 +67,7 @@ services:
     build: nginx/.
     restart: always
     depends_on:
-      data-loader:
+      data-downloader:
         condition: service_completed_successfully
       web-server:
         condition: service_started

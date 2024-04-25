@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "Checking initial configuration..."
+echo "Running Docker entrypoint..."
 echo "Fetching VEP caches, Fasta files and liftOver chain files for GRCh37 and GRCh38 genomes (download size ~46Gb):"
 
 echo " - GRCh37 fasta file... "
