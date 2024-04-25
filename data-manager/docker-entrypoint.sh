@@ -1,6 +1,8 @@
 #!/bin/bash
 
-echo "Checking initial configuration..."
+echo "Waiting 10 seconds.."
+sleep 10
+
 echo "Fetching VEP caches, Fasta files and liftOver chain files for GRCh37 and GRCh38 genomes (download size ~46Gb):"
 
 echo " - GRCh37 fasta file... "
@@ -61,5 +63,4 @@ if [ ! -f /data/liftover/GRCh38_to_GRCh37.chain.gz ] || [ $(wc -c /data/liftover
 fi
 echo "    --> OK "
 
-echo "Configuration finished correctly..."
 exec "$@"

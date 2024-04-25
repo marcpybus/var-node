@@ -3,21 +3,22 @@ from flask import Flask
 from flask import render_template
 from flask import redirect
 import sys
-import requests
+import os
 import httpx
 import json
 import asyncio
 import tempfile
-import time
-import ssl
 import subprocess
 import re
 
-CERT = '/network-configuration/cert.pem'
-KEY = '/network-configuration/key.pem'
-CACERT = '/network-configuration/ca-cert.pem'
 NODES = '/network-configuration/nodes.json'
-TIMEOUT = 30
+TIMEOUT = int(os.environ['QUERY_TIMEOUT'])
+CERT = '/network-configuration/' + os.environ['SERVER_CERT_FILENAME']
+KEY = '/network-configuration/' + os.environ['SERVER_KEY_FILENAME']
+CACERT = '/network-configuration/' + os.environ['CA_CERT_FILENAME']
+
+NETWORK_NAME = os.environ['NETWORK_NAME']
+NODE_NAME = os.environ['NODE_NAME']
 
 SUPPORTED_CHROMOSOMES = {
     "chr1": "1",    "chr2": "2",    "chr3": "3",    "chr4": "4",    "chr5": "5",
@@ -207,12 +208,12 @@ async def get_data_from_nodes(genome, variant_id):
 
 @app.route('/')
 async def index(variant_id = '', genome = ''):
-    return render_template("base.html", variant_id_data = None, results = None )
+    return render_template("base.html", variant_id_data = None, results = None, node_name = NODE_NAME, network_name = NETWORK_NAME )
 
 @app.route('/info')
 async def info(variant_id = '', genome = ''):
     results = await get_data_from_nodes(genome, variant_id)
-    return render_template("base.html", variant_id_data = {"variant_id":variant_id}, results = results )
+    return render_template("base.html", variant_id_data = {"variant_id":variant_id}, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME )
 
 @app.route('/<genome>/<variant_id>')
 async def show_variant_id_results(genome, variant_id):
@@ -229,7 +230,7 @@ async def show_variant_id_results(genome, variant_id):
                     variant_id_data = variant_id_annotation(variant_id_data)
                     if variant_id_data["validation"] == "OK":
                         results = await get_data_from_nodes(genome, variant_id)
-    return render_template("base.html", variant_id_data = variant_id_data, results = results)
+    return render_template("base.html", variant_id_data = variant_id_data, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME)
     
 @app.route('/json/<genome>/<variant_id>')
 async def show_variant_id_json(genome, variant_id):
@@ -246,7 +247,7 @@ async def show_variant_id_json(genome, variant_id):
                     variant_id_data = variant_id_annotation(variant_id_data)
                     if variant_id_data["validation"] == "OK":
                         results = await get_data_from_nodes(genome, variant_id)
-    return render_template("json.html", variant_id_data = variant_id_data, results = results)
+    return render_template("json.html", variant_id_data = variant_id_data, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME)
 
 @app.route('/liftover/<genome>/<variant_id>')
 async def make_liftover(genome, variant_id):

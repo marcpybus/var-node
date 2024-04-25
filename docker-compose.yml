@@ -1,20 +1,10 @@
 services:
-  data-downloader:
-    build: data-downloader/.
-    volumes:
-      - ./data:/data
-    networks:
-      internal:
-        ipv4_address: 172.18.0.7
   data-manager:
     build: data-manager/.
     volumes:
       - ./data-manager/apps:/apps
       - ./data:/data
       - ./network-configuration:/network-configuration
-    depends_on:
-      data-downloader:
-        condition: service_completed_successfully
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
@@ -24,13 +14,17 @@ services:
   web-server:
     build: web-server/.
     restart: always
+    environment:
+      QUERY_TIMEOUT: ${QUERY_TIMEOUT}
+      CA_CERT_FILENAME: ${CA_CERT_FILENAME}
+      SERVER_CERT_FILENAME: ${SERVER_CERT_FILENAME}
+      SERVER_KEY_FILENAME: ${SERVER_KEY_FILENAME}
+      NETWORK_NAME: ${NETWORK_NAME}
+      NODE_NAME: ${NODE_NAME}
     volumes:
       - ./web-server/app:/app
       - ./data:/data
       - ./network-configuration:/network-configuration
-    depends_on:
-      data-downloader:
-        condition: service_completed_successfully
     networks:
       internal:
         ipv4_address: 172.18.0.2
@@ -42,9 +36,6 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
     volumes:
       - ./variant-server/app:/app
-    depends_on:
-      data-downloader:
-        condition: service_completed_successfully
     networks:
       internal:
         ipv4_address: 172.18.0.3
@@ -58,25 +49,21 @@ services:
     volumes:
       - ./data/mariadb-data:/var/lib/mysql
       - ./mariadb/schema-mariadb.sql:/docker-entrypoint-initdb.d/schema-mariadb.sql
-    depends_on:
-      data-downloader:
-        condition: service_completed_successfully
     networks:
       internal:
         ipv4_address: 172.18.0.5
   nginx:
     build: nginx/.
     restart: always
-    depends_on:
-      data-downloader:
-        condition: service_completed_successfully
-      web-server:
-        condition: service_started
-      variant-server:
-        condition: service_started
+    environment:
+      FRONTEND_CERT_FILENAME: ${FRONTEND_CERT_FILENAME}
+      FRONTEND_KEY_FILENAME: ${FRONTEND_KEY_FILENAME}
+      CA_CERT_FILENAME: ${CA_CERT_FILENAME}
+      SERVER_CERT_FILENAME: ${SERVER_CERT_FILENAME}
+      SERVER_KEY_FILENAME: ${SERVER_KEY_FILENAME}
     volumes:
       - ./nginx/server-certificates:/server-certificates
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./nginx/nginx.conf:/etc/nginx/templates/nginx.conf.template
       - ./network-configuration:/network-configuration
     ports: 
       - 80:80

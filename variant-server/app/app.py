@@ -1,12 +1,9 @@
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask
-from flask import render_template
 import os
-import pysam
 import json
-import csv
 import sys
-import mysql.connector
+import mariadb
 
 app = Flask( __name__ )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_port=1, x_proto=1, x_prefix=1)
@@ -16,8 +13,8 @@ db = os.environ['MARIADB_DATABASE']
 
 def get_genomes():
     try:
-        conn = mysql.connector.connect( user="root", password=password, host="mariadb", port=3306, database=db )
-    except mysql.connector.Error as e:
+        conn = mariadb.connect( user="root", password=password, host="mariadb", port=3306, database=db )
+    except mariadb.Error as e:
         print(f"Error connecting to MariaDB Platform: {e}")
         sys.exit(1)
     cur = conn.cursor(dictionary=True)
@@ -56,8 +53,8 @@ def show_variant_id_data(genome, variant_id):
 
         sample_data = []
         try:
-            conn = mysql.connector.connect( user="root", password=password, host="mariadb", port=3306, database=db )
-        except mysql.connector.Error as e:
+            conn = mariadb.connect( user="root", password=password, host="mariadb", port=3306, database=db )
+        except mariadb.Error as e:
             print(f"Error connecting to MariaDB Platform: {e}")
             sys.exit(1)
         cur = conn.cursor(dictionary=True)
