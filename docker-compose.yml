@@ -60,7 +60,9 @@ services:
       data-loader:
         condition: service_completed_successfully
       web-server:
+        condition: service_started
       variant-server:
+        condition: service_started
     volumes:
       - ./nginx/server-certificates:/server-certificates
       - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
