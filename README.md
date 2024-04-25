@@ -26,8 +26,8 @@ docker compose logs -f
 ```
 ### Setup
 - Modify the folowing variables in `.env` file with the specificities of your node:
-    - Network name: `NETWORK_NAME` 
-    - Node name: `NODE_NAME`
+    - `NETWORK_NAME="Network name"`
+    - `NODE_NAME="Node name"`
 - If your are changing the deafult certificates filenames, please change the folowing variables:
     - CA Root certificate: `CA_FILENAME` 
     - CA Root certificate: `CA_FILENAME` 
