@@ -28,11 +28,11 @@ docker compose logs -f
 - Modify the folowing variables in `.env` file with the specificities of your node:
     - Internal name of the network: `NETWORK_NAME="Network name"`
     - Internal name of the node: `NODE_NAME="Node name"`
-- If your are changing the deafult certificates filenames, please change the folowing variables:
+- The variant-server certificates are stored in the `network-configuration/` directory. If your are changing the default certificates filenames, please change the folowing variables in `.env` file:
     - CA Root certificate: `CA_CERT_FILENAME="ca-cert.pem"` 
     - Variant-server certificate: `SERVER_CERT_FILENAME="cert.pem"` 
     - Variant-serve key: `SERVER_KEY_FILENAME="key.pem"` 
-- The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to change them and use a properly configured certificate signed by your institutions CA. You can also change the default filenames:
+- The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to change them and use a properly configured certificate signed by your institutions CA. You should also change the default filenames in `.env` file:
     - Front-end certificate: `FRONTEND_CERT_FILENAME="default.crt"` 
     - Front-end key: `FRONTEND_KEY_FILENAME="default.key"` 
 
