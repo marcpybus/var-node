@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Waiting 10 seconds.."
-sleep 10
+echo "Waiting 30 seconds.."
+sleep 30
 
 echo "Fetching VEP caches, Fasta files and liftOver chain files for GRCh37 and GRCh38 genomes (download size ~46Gb):"
 
