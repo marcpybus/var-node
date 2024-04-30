@@ -68,19 +68,18 @@ docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
 - Variants will be left-aligned and normalized, and multiallelic sites will be splitted into biallelic records with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`
 - Variants containing * (star) or . (missing) alleles won't be included in the database.
 
-#### Load on variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes VCF
+#### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes VCF
 ```console
 cd var-node
 docker compose run -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
 ```
-\* it can take few hour to upload
 
 #### Load all chromosome 10 variants from 1000genomes VCF
 ```console
 wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 docker run -i var-node-data-manager-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 ```
-\* it can take few hour to upload
+\* it can take few hours to upload
 
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
