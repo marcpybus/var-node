@@ -38,7 +38,7 @@ docker compose logs -f
 
 ### IMPORTANT
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
-The first time the web-server container is run, approximately 46 Gb of data will be downloaded and saved in `data/`:
+The first time the **data-manager** container is run, approximately 46 Gb of data will be downloaded and saved in `data/`:
 - Fasta files (GRCh37 and GRCh38 primary assemblies from Ensembl):
     - `https://ftp.ensembl.org/pub/grch37/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz`
     - `https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`
@@ -61,14 +61,14 @@ or using docker compose:
 cd var-node
 docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
 ```
-- Only uncompressed or bgzip-compressed VCF file are allowed, and the reference genome version (grch37 or grch38) have to be specified.
-- Variants from samples that are present in the databse won't be uploaded. You should merge all the VCF files from a given sample and reupload them to the database.
-- Only variants mapped to primary assembled chromosomes are inserted into the database: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT
-- Variants with hg19/hg38 chromosome names will be lift over to their equivalent GRCh37/GRCh38 chromosome names.
-- Variants will be left-aligned and normalized, and multiallelic sites will be splitted into biallelic records with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`
-- Variants containing * (star) or . (missing) alleles won't be included in the database.
+- Only uncompressed or bgzip-compressed VCF files are allowed, and the reference genome version (grch37 or grch38) must be specified.
+- Variants from samples in the database won't be uploaded. You should merge all VCF files from a given sample and re-upload them to the database.
+- Only variants mapped to primary assembled chromosomes will be added to the database: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT
+- Variants with hg19/hg38 chromosome names will be carried over to their corresponding GRCh37/GRCh38 chromosome names.
+- Variants will be left aligned and normalised, and multiallelic sites will be split into biallelic datasets with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`.
+- Variants with * (asterisk) or . (missing) alleles won't be included in the database.
 
-#### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes VCF
+#### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples
 ```console
 cd var-node
 docker compose run -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
@@ -106,16 +106,16 @@ Modify `network-configuration/nodes.json` to include the domain names or IPs fro
 
 ### Network certificate configuration
 Proper configuration of SSL certificates is essential to make **var-node** a secure way to exchange variant information:
-- It is necessary to generate a single CA root certificate and key that will be used to sign all certificates used to encrypt and authenticate communication between nodes. Use a long passphrase for the key.
+- It is necessary to generate a single CA root certificate and key that will be used to sign all certificates used to encrypt and authenticate communications between nodes. Use a long passphrase for the key.
 - The validity of the certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
-- The key and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes that provide their Certificate Signing Request file.
-- This CA root certificate should be distributed to each configured node along with the signed certificate.
+- The key and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes that submit their Certificate Signing Request file.
+- This root CA certificate should be distributed to each configured node along with the signed certificate.
 
 #### Generate the network's CA Root Certificate and Key
 ```console
 docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
-- use a "very-long" passphrase to encript the key
+- **use a "very-long" passphrase to encript the key**
 - <Network-Own-CA> use the name of your network of nodes
 \* certificate expiration is set to 100 years!
 
@@ -131,14 +131,14 @@ docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "sub
 - <domain.fqdn> use your domain FQDN 
 \* certificate expiration is set to 100 years!
 
-### WAF configuration
-Incoming requests have to be redirected to the port 5000 of the server hosting the Docker setup. Two different approaches can be configured with nginx, dependening on the preferences of your institution WAF administrator.
+### WAF Configuration
+Incoming requests must be redirected to port 5000 on the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
 
 #### SSL Passthrough
-As the name suggests, traffic is simply passed through the WAF without being decrypted and towards the port 5000 of the server hosting the Docker setup. This is the easiest configuration as it doesn't requires to reconfigure the WAF by the IT administrator every time the certificates are renewed. This option transfers a higher responsability to the person managing the node, as any putative malicious traffic is also redirected to the node. However it is considered more secure to thrid party manipulations and it doesn't require maintenance from the WAF administrator.
+As the name suggests, traffic is simply passed through the WAF without being decrypted and sent to port 5000 of the server hosting the Docker setup. This is the simplest configuration as it doesn't require the IT administrator to reconfigure the WAF each time the certificates are renewed. This option places more responsibility on the person managing the node, as any suspected malicious traffic will also be redirected to the node. However, it is considered more secure against third party manipulation and doesn't require maintenance by the WAF administrator.
 
-#### SSL Bridging/Offloading
-This option requires the WAF to be configured with the network's CA and server certificates to provide SSL encryptation and perform client verification during the process of SSL bridging/offloading. Traffic is then redirected to the port 5000 of the server hosting the Docker setup. Additionally nginx should be configured to only accept requests from the WAF's IP, which would avoid querying the variant-server from within the institution's private network or LAN. As mentioned above, any new issue of certificates would require intervention of the WAF administrator. This configuration could be more easily manipulated by a thrird party (i.e. WAF administrator) and it is considered a less secure option.
+#### SSL bridging/offloading
+This option requires the WAF to be configured with the network's CA and server certificates to provide SSL encryption and perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. As mentioned above, any reissuance of certificates would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. the WAF administrator) and is considered a less secure option.
 
 ### Credit
 @marcpybus
