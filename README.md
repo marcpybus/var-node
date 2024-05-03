@@ -1,13 +1,13 @@
 # var-node (**beta**)
 
-*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements two-way SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-manager**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-manager**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
-*var-node* is intended to run within the private network (LAN) of an institution, so that the frontend is accessible only to the users of the institution:
+*var-node* is intended to run within the private network (LAN) of an institution, so that the front-end is accessible only to the users of the institution:
 - Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
-- Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are displayed on-the-fly in the frontend.
-- If requested, variant liftover will be performed on the fly with bcftools (`bcftools +liftover`) using the Ensembl chain files.
-- Incoming variant requests from external nodes should be routed to port 5000 of the server hosting the Docker setup. SSL encryption is carried out using a certificate signed by the Network’s Own CA Root Certificate. Nginx will verify client's certificate and then redirect the request to the variant-server container. Client certificate verification is performed using the nginx ssl_verify_client directive pointing to the Network’s Own CA Root Certificate. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
+- Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are also displayed on-the-fly in the front-end.
+- If requested, variant liftover will be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
+- Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is carried out using a certificate signed by the Network’s Own CA Root Certificate. Client must also provide a SSL certificate also signed by the Network’s Own CA Root Certificate. **nginx** can then verify client's certificate and redirect the request to the variant-server container. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
 
 ![var-node-schema-2](https://github.com/marcpybus/var-node/assets/12168869/cea32603-dd3e-4779-9ca3-e7ecc4e528c6)
 
@@ -76,7 +76,7 @@ cd var-node
 docker compose run -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
 ```
 
-#### Load all chromosome 10 variants from 1000genomes VCF
+#### Load all chromosome 10 variants from 1000genomes samples
 ```console
 wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 docker run -i var-node-data-manager-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
@@ -104,7 +104,7 @@ The default configuration have dummy certificates configured so the nginx contai
 ]
 ```
 
-Modify `network-configuration/nodes.json` to include the domain names or IPs from the nodes you want to connect with.
+Modify `network-configuration/nodes.json` to include the domain names or IPs from the nodes you want to connect with. These nodes will need to present SSL certificates signed by the same CA Root certificate.
 
 ### Network certificate configuration
 Proper configuration of SSL certificates is essential to make **var-node** a secure way to exchange variant information:
