@@ -24,6 +24,8 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
+\* Arround 46Gb of data will be downloaded on the first time the **data-manager** container is up
+
 ### Setup
 - Modify the folowing variables in `.env` file with the specificities of your node:
     - Internal name of the network: `NETWORK_NAME="Network name"`
@@ -36,7 +38,7 @@ docker compose logs -f
     - Front-end certificate: `FRONTEND_CERT_FILENAME="default.crt"` 
     - Front-end key: `FRONTEND_KEY_FILENAME="default.key"` 
 
-### IMPORTANT
+### Data download
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
 The first time the **data-manager** container is run, approximately 46 Gb of data will be downloaded and saved in `data/`:
 - Fasta files (GRCh37 and GRCh38 primary assemblies from Ensembl):
@@ -49,7 +51,7 @@ The first time the **data-manager** container is run, approximately 46 Gb of dat
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh37_to_GRCh38.chain.gz`
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh38_to_GRCh37.chain.gz`
 
-\* Data downloading process can be tracked in the docker container logs
+\* Data downloading process can be tracked in the container log
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
