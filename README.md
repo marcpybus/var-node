@@ -119,7 +119,8 @@ docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:409
 ```
 - use a "very-long" passphrase to encript the key
 - <Network-Own-CA> use the name of your network of nodes
-\* certificate expiration is set to 100 years!
+  
+\* ATTENTION: certificate expiration is set to 100 years!
 
 #### Generate server Key and Certificate Signing Request
 ```console
@@ -130,8 +131,9 @@ docker exec -it var-node-data-manager-1 openssl req -noenc -newkey rsa:4096 -key
 docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey data-managerca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - <XXX.XXX.XXX.XXX> use your public IP
-- <domain.fqdn> use your domain FQDN 
-\* certificate expiration is set to 100 years!
+- <domain.fqdn> use your domain FQDN
+  
+\* ATTENTION: certificate expiration is set to 100 years!
 
 ### WAF Configuration
 Incoming requests must be redirected to port 5000 on the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
