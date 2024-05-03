@@ -117,7 +117,7 @@ Proper configuration of SSL certificates is essential to make **var-node** a sec
 ```console
 docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
-- **use a "very-long" passphrase to encript the key**
+- use a "very-long" passphrase to encript the key
 - <Network-Own-CA> use the name of your network of nodes
 \* certificate expiration is set to 100 years!
 
