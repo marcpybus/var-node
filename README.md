@@ -24,7 +24,7 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-\* Arround 46Gb of data will be downloaded on the first time the **data-manager** container is up
+\* ATTENTION: around 46Gb of data will be downloaded on the first time the **data-manager** container is up
 
 ### Setup
 - Modify the folowing variables in `.env` file with the specificities of your node:
