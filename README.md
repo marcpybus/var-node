@@ -24,19 +24,25 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-\* ATTENTION: around 46Gb of data will be downloaded on the first time the **data-manager** container is up
+
+* To access the front-end, use your web browser with the IP or domain name of the server. Locally you can use https://localhost/.
+* About 46 GB of data will be downloaded the first time the data manager container is started up. Data download process can be tracked in the container log. See the "Data download" section.
+* You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
 
 ### Setup
-- Modify the folowing variables in `.env` file with the specificities of your node:
+- Modify the following variables in `.env` file with the details of your node:
     - Internal name of the network: `NETWORK_NAME="Network name"`
     - Internal name of the node: `NODE_NAME="Node name"`
-- The variant-server certificates are stored in the `network-configuration/` directory. If your are changing the default certificates filenames, please change the folowing variables in `.env` file:
+- Variant-server certificates are stored in the `network-configuration/` directory. If you change the default certificate filenames, please change the following variables in the `.env` file:
     - CA Root certificate: `CA_CERT_FILENAME="ca-cert.pem"` 
     - Variant-server certificate: `SERVER_CERT_FILENAME="cert.pem"` 
-    - Variant-serve key: `SERVER_KEY_FILENAME="key.pem"` 
-- The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to change them and use a properly configured certificate signed by your institutions CA. You should also change the default filenames in `.env` file:
+    - Variant-server key: `SERVER_KEY_FILENAME="key.pem"` 
+- The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to modify them and use a properly configured certificate signed by your institution's CA. You should also change the default filenames in the `.env` file:
     - Front-end certificate: `FRONTEND_CERT_FILENAME="default.crt"` 
-    - Front-end key: `FRONTEND_KEY_FILENAME="default.key"` 
+    - Front-end key: `FRONTEND_KEY_FILENAME="default.key"`
+
+### Configuring the front-end password
+
 
 ### Data download
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
@@ -44,14 +50,15 @@ The first time the **data-manager** container is run, approximately 46 Gb of dat
 - Fasta files (GRCh37 and GRCh38 primary assemblies from Ensembl):
     - `https://ftp.ensembl.org/pub/grch37/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz`
     - `https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`
-- Vep caches (GRCh37 and GRCh38 version 111 VEP caches):
-    - `https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz`
-    - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 - Chain files (GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files):
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh37_to_GRCh38.chain.gz`
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh38_to_GRCh37.chain.gz`
+- Vep caches (GRCh37 and GRCh38 version 111 VEP caches):
+    - `https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz`
+    - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 
-\* Data downloading process can be tracked in the container log
+\* It is possible to skip VEP annotation and reduce disk space requirements. Fasta files and chain files **must** be downloaded to use make queries.
+\* Uncomment the USE_VEP=false line in the docker-compose.yml file before you run the project.
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
