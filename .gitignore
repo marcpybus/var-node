@@ -1,3 +1,4 @@
 data
-network-configuration
-!network-configuration/nodes.json
+variant-server/app/__pycache__
+web-server/app/__pycache__
+web-server/app/STDERR

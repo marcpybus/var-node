@@ -13,7 +13,7 @@ import re
 
 NODES = '/network-configuration/nodes.json'
 TIMEOUT = int(os.environ['QUERY_TIMEOUT'])
-USE_VEP = bool(os.environ['USE_VEP'])
+USE_VEP = int(os.environ['USE_VEP'])
 CERT = '/network-configuration/' + os.environ['SERVER_CERT_FILENAME']
 KEY = '/network-configuration/' + os.environ['SERVER_KEY_FILENAME']
 CACERT = '/network-configuration/' + os.environ['CA_CERT_FILENAME']
@@ -141,7 +141,9 @@ def variant_id_annotation(variant_id_data):
                         tx_data["impact"] = tx_info_list[2]
                     variant_id_data["results"].append(tx_data)
     else:
-        variant_id_data["results"]["internal_id"] = "VEP annotation not enabled"
+        variant_id_data["results"]=[{"impact":"","consequence":"","internal_id":"VEP not enabled"}]
+        print(variant_id_data, file=sys.stderr)
+    print(USE_VEP, file=sys.stderr)
     return variant_id_data
 
 def make_lift_over(variant_id_data):
