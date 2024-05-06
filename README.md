@@ -24,7 +24,8 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-* **ATTENTION!** Approximately 46 GB of data have to be downloaded and saved in `data/` the first time the **data-manager** container is started up. Data download process can be tracked in the container log. It is possible to reduce disk space requeriments by skipping VEP annotation. See the "Data download" section.
+* **ATTENTION!** Approximately 46GB of data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
+* **IMPORTANT** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
 * To access the front-end, use your web browser with the IP or domain name of the server. Locally you can use https://localhost/.
 * You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
 * Remove the `data/` directory to start the configuration from scratch.
@@ -45,8 +46,9 @@ docker compose logs -f
 To access the front-end, you must configure at least one user (and password) using the **data-manager** container:
 ```console
 cd var-node
-docker compose exec -T data-manager htpasswd -c /data/.htpasswd <username>
+docker compose run -T data-manager htpasswd -c /data/.htpasswd <username>
 ```
+
 \* <username> use your user name
 \* You will be prompted for a password. Make sure you use a strong password!
 
