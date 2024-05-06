@@ -45,7 +45,7 @@ docker compose logs -f
 To access the front-end, you must configure at least one user (and password) using the **data-manager** container:
 ```console
 cd var-node
-docker compose exec -T data-manager htpasswd -c /data/nginx/.htpasswd <username>
+docker compose exec -T data-manager htpasswd -c /data/.htpasswd <username>
 ```
 \* <username> use your user name
 \* You will be prompted for a password. Make sure you use a strong password!
