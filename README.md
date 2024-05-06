@@ -25,8 +25,8 @@ docker compose up --build -d
 docker compose logs -f
 ```
 
+* **ATTENTTION!** About 46 GB of data will be downloaded the first time the data manager container is started up. Data download process can be tracked in the container log. It is possible to reduce disk space requeriments by skipping VEP annotation. See the "Data download" section.
 * To access the front-end, use your web browser with the IP or domain name of the server. Locally you can use https://localhost/.
-* About 46 GB of data will be downloaded the first time the data manager container is started up. Data download process can be tracked in the container log. It is possible to reduce disk space requeriments by skipping VEP annotation. See the "Data download" section.
 * You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
 * Remove the `data` directory to restart the configuration from zero.
 
