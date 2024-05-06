@@ -64,8 +64,8 @@ The first time the **data-manager** container is run, approximately 46 Gb of dat
     - `https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz`
     - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 
-\* It is possible to skip VEP annotation and reduce disk space requirements. Fasta files and chain files **must** be downloaded to use make queries.
-\* Set the `USE_VEP=true` variable to `false` in the `.env` file before you run the project.
+\* It is possible to skip VEP annotation and reduce disk space requirements. Set the `USE_VEP=1` variable to `0` in the `.env` file before you run the project.
+\* Fasta files and chain files **must** be downloaded to use make queries.
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
