@@ -46,7 +46,7 @@ docker compose logs -f
 To access the front-end, you must configure at least one user (and password) using the HTTP Basic Authentication directive within the **nginx** container:
 ```console
 cd var-node
-docker compose exec nginx htpasswd -c /data/.htpasswd <username>
+docker compose exec -T data-manager htpasswd -c /data/nginx/.htpasswd <username>
 ```
 \* <username> use your user name
 \* You will be prompted for a password. Make sure you use a strong password!
@@ -65,7 +65,7 @@ The first time the **data-manager** container is run, approximately 46 Gb of dat
     - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 
 \* It is possible to skip VEP annotation and reduce disk space requirements. Set the `USE_VEP=1` variable to `0` in the `.env` file before you run the project.
-\* Fasta files and chain files **must** be downloaded to use make queries.
+\* Fasta files and chain files **must** be downloaded to use make proper queries.
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
@@ -127,27 +127,27 @@ Proper configuration of SSL certificates is essential to make **var-node** a sec
 - The key and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes that submit their Certificate Signing Request file.
 - This root CA certificate should be distributed to each configured node along with the signed certificate.
 
-#### Generate the network's CA Root Certificate and Key
+#### Generate the network's CA Certificate and Key
 ```console
 docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
 - use a "very-long" passphrase to encript the key
 - <Network-Own-CA> use the name of your network of nodes
   
-\* ATTENTION: certificate expiration is set to 100 years!
+\* **ATTENTION!** certificate expiration is set to 100 years
 
 #### Generate server Key and Certificate Signing Request
 ```console
 docker exec -it var-node-data-manager-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
-#### Sign server Certificate Signing Request with the Certificate Authority's Certificate and Key
+#### Sign server CSR with the CA Certificate and Key
 ```console
-docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey data-managerca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - <XXX.XXX.XXX.XXX> use your public IP
 - <domain.fqdn> use your domain FQDN
   
-\* ATTENTION: certificate expiration is set to 100 years!
+\* **ATTENTION!** certificate expiration is set to 100 years
 
 ### WAF Configuration
 Incoming requests must be redirected to port 5000 on the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
