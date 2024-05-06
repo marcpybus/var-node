@@ -46,8 +46,9 @@ docker compose logs -f
 To access the front-end, you must configure at least one user (and password) using the HTTP Basic Authentication directive within the **nginx** container:
 ```console
 cd var-node
-docker compose exec nginx htpasswd -c /data/.htpasswd username
+docker compose exec nginx htpasswd -c /data/.htpasswd <username>
 ```
+\* <username> use your user name
 \* You will be prompted for a password. Make sure you use a strong password!
 
 ### Data download
