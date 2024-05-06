@@ -48,7 +48,7 @@ To access the front-end, you must configure at least one user (and password) usi
 cd var-node
 docker compose run -T data-manager htpasswd -c /data/.htpasswd <username>
 ```
-- <username> use your user name
+- `<username>` use your user name
 - You will be prompted for a password. Make sure you use a strong password!
 
 ### Data download
@@ -130,7 +130,7 @@ Proper configuration of SSL certificates is essential to make **var-node** a sec
 docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
 ```
 - use a "very-long" passphrase to encript the key
-- <Network-Own-CA> use the name of your network of nodes
+- `<Network-Own-CA>` use the name of your network of nodes
   
 \* **ATTENTION!** certificate expiration is set to 100 years
 
@@ -142,8 +142,8 @@ docker exec -it var-node-data-manager-1 openssl req -noenc -newkey rsa:4096 -key
 ```console
 docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
-- <XXX.XXX.XXX.XXX> use your public IP
-- <domain.fqdn> use your domain FQDN
+- `<XXX.XXX.XXX.XXX>` use your public IP
+- `<domain.fqdn>` use your public domain FQDN
   
 \* **ATTENTION!** certificate expiration is set to 100 years
 
