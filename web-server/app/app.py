@@ -13,6 +13,7 @@ import re
 
 NODES = '/network-configuration/nodes.json'
 TIMEOUT = int(os.environ['QUERY_TIMEOUT'])
+USE_VEP = bool(os.environ['USE_VEP'])
 CERT = '/network-configuration/' + os.environ['SERVER_CERT_FILENAME']
 KEY = '/network-configuration/' + os.environ['SERVER_KEY_FILENAME']
 CACERT = '/network-configuration/' + os.environ['CA_CERT_FILENAME']
@@ -95,49 +96,52 @@ def variant_id_normalization(variant_id_data):
         return variant_id_data
 
 def variant_id_annotation(variant_id_data):
-    vcf_input = variant_id_data["chromosome"] + " " + variant_id_data["position"] + " . " + variant_id_data["reference"] + " " + variant_id_data["alternative"] + " PASS ."
-    output = subprocess.run(["/ensembl-vep/vep","--dont_skip","--cache","--offline","--dir_cache",SUPPORTED_GENOMES[variant_id_data["genome"]]["cache"],"--fasta",SUPPORTED_GENOMES[variant_id_data["genome"]]["fasta"],"--assembly",SUPPORTED_GENOMES[variant_id_data["genome"]]["assembly"],"--merged","--transcript_version","--hgvs","--hgvsg","--vcf","-input_data",vcf_input,"-o","STDOUT","--no_stats","--quiet","--warning_file","STDERR","--skipped_variants_file","STDERR"], capture_output=True, text=True)
-    vcf = output.stdout
-    for vcf_line in vcf.splitlines():
-        if not vcf_line.startswith("#"):
-            print( vcf_line , file=sys.stderr)
-            vcf_list = vcf_line.split("\t")
-            chr = vcf_list[0]
-            pos = vcf_list[1]
-            ref = vcf_list[3]
-            alt = vcf_list[4]
-            variant_id_data["variant_id"] = chr + "-" + pos + "-" + ref + "-" + alt
-            variant_id_data["genome"] = variant_id_data["genome"]
-            variant_id_data["results"] = []
-            info_field = vcf_list[7]
-            info_list = info_field[4:].split(",")
-            for tx_info in info_list:
-                tx_data = {}
-                tx_info_list = tx_info.split("|")
-                gene = tx_info_list[3]
-                tx_id = tx_info_list[6]
-                if tx_info_list[30]:
-                    hgvsc_list = tx_info_list[10].split(":")
-                    hgvsc = ''
-                    if len(hgvsc_list) > 1: hgvsc = hgvsc_list[1] 
-                    hgvsp_list = tx_info_list[11].split(":")
-                    hgvsp = ''
-                    if len(hgvsp_list) > 1: hgvsp = hgvsp_list[1] 
-                    hgvsg_list = tx_info_list[30].split(":")
-                    hgvsg = ''
-                    if len(hgvsg_list) > 1: hgvsg = hgvsg_list[1] 
-                    if hgvsc == '': hgvsc = hgvsg
-                    if gene:
-                        internal_id =  gene + "(" + tx_id + "):" + hgvsc
-                    else:
-                        internal_id =  tx_info_list[30]
-                    if hgvsp != '': internal_id = internal_id + ":" + hgvsp
-                    tx_data["internal_id"] = internal_id
-                if tx_info_list[1]:
-                    tx_data["consequence"] = tx_info_list[1]
-                if tx_info_list[2]:
-                    tx_data["impact"] = tx_info_list[2]
-                variant_id_data["results"].append(tx_data)
+    if USE_VEP:
+        vcf_input = variant_id_data["chromosome"] + " " + variant_id_data["position"] + " . " + variant_id_data["reference"] + " " + variant_id_data["alternative"] + " PASS ."
+        output = subprocess.run(["/ensembl-vep/vep","--dont_skip","--cache","--offline","--dir_cache",SUPPORTED_GENOMES[variant_id_data["genome"]]["cache"],"--fasta",SUPPORTED_GENOMES[variant_id_data["genome"]]["fasta"],"--assembly",SUPPORTED_GENOMES[variant_id_data["genome"]]["assembly"],"--merged","--transcript_version","--hgvs","--hgvsg","--vcf","-input_data",vcf_input,"-o","STDOUT","--no_stats","--quiet","--warning_file","STDERR","--skipped_variants_file","STDERR"], capture_output=True, text=True)
+        vcf = output.stdout
+        for vcf_line in vcf.splitlines():
+            if not vcf_line.startswith("#"):
+                print( vcf_line , file=sys.stderr)
+                vcf_list = vcf_line.split("\t")
+                chr = vcf_list[0]
+                pos = vcf_list[1]
+                ref = vcf_list[3]
+                alt = vcf_list[4]
+                variant_id_data["variant_id"] = chr + "-" + pos + "-" + ref + "-" + alt
+                variant_id_data["genome"] = variant_id_data["genome"]
+                variant_id_data["results"] = []
+                info_field = vcf_list[7]
+                info_list = info_field[4:].split(",")
+                for tx_info in info_list:
+                    tx_data = {}
+                    tx_info_list = tx_info.split("|")
+                    gene = tx_info_list[3]
+                    tx_id = tx_info_list[6]
+                    if tx_info_list[30]:
+                        hgvsc_list = tx_info_list[10].split(":")
+                        hgvsc = ''
+                        if len(hgvsc_list) > 1: hgvsc = hgvsc_list[1] 
+                        hgvsp_list = tx_info_list[11].split(":")
+                        hgvsp = ''
+                        if len(hgvsp_list) > 1: hgvsp = hgvsp_list[1] 
+                        hgvsg_list = tx_info_list[30].split(":")
+                        hgvsg = ''
+                        if len(hgvsg_list) > 1: hgvsg = hgvsg_list[1] 
+                        if hgvsc == '': hgvsc = hgvsg
+                        if gene:
+                            internal_id =  gene + "(" + tx_id + "):" + hgvsc
+                        else:
+                            internal_id =  tx_info_list[30]
+                        if hgvsp != '': internal_id = internal_id + ":" + hgvsp
+                        tx_data["internal_id"] = internal_id
+                    if tx_info_list[1]:
+                        tx_data["consequence"] = tx_info_list[1]
+                    if tx_info_list[2]:
+                        tx_data["impact"] = tx_info_list[2]
+                    variant_id_data["results"].append(tx_data)
+    else:
+        variant_id_data["results"]["internal_id"] = "VEP annotation not enabled"
     return variant_id_data
 
 def make_lift_over(variant_id_data):
