@@ -26,8 +26,9 @@ docker compose logs -f
 ```
 
 * To access the front-end, use your web browser with the IP or domain name of the server. Locally you can use https://localhost/.
-* About 46 GB of data will be downloaded the first time the data manager container is started up. Data download process can be tracked in the container log. See the "Data download" section.
+* About 46 GB of data will be downloaded the first time the data manager container is started up. Data download process can be tracked in the container log. It is possible to reduce disk space requeriments by skipping VEP annotation. See the "Data download" section.
 * You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
+* Remove the whole `data` directory to restart the configuration from zero.
 
 ### Setup
 - Modify the following variables in `.env` file with the details of your node:
@@ -42,7 +43,11 @@ docker compose logs -f
     - Front-end key: `FRONTEND_KEY_FILENAME="default.key"`
 
 ### Configuring the front-end password
-
+To access the front-end, you need to configure an http basic authentication user and password within the `nginx' container:
+```console
+cd var-node
+docker compose exec -T nginx
+```
 
 ### Data download
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
@@ -58,7 +63,7 @@ The first time the **data-manager** container is run, approximately 46 Gb of dat
     - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 
 \* It is possible to skip VEP annotation and reduce disk space requirements. Fasta files and chain files **must** be downloaded to use make queries.
-\* Uncomment the USE_VEP=false line in the docker-compose.yml file before you run the project.
+\* Uncomment the `USE_VEP=false` line in the `docker-compose.yml` file before you run the project.
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
