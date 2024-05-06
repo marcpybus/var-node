@@ -6,8 +6,8 @@
 - Access to the front-end is controlled by nginx's "HTTP Basic Authentication" directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
 - Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are also displayed on-the-fly in the front-end.
-- If requested, variant liftover will be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
-- Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is carried out using a certificate signed by the Network’s Own CA Root Certificate. Client must also provide a SSL certificate also signed by the Network’s Own CA Root Certificate. **nginx** can then verify client's certificate and redirect the request to the variant-server container. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
+- If requested, variant liftover can be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
+- Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is carried out using a certificate signed by the Network’s Own CA Certificate. Client must also provide a SSL certificate also signed by the Network’s Own CA Certificate. **nginx** can then verify client's certificate and redirect the request to the variant-server container. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
 
 ![var-node-schema-2](https://github.com/marcpybus/var-node/assets/12168869/c617ee5e-aff9-4267-901c-c43a721c8bbd)
 
@@ -24,18 +24,17 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-
-* **ATTENTION!** About 46 GB of data will be downloaded the first time the data manager container is started up. Data download process can be tracked in the container log. It is possible to reduce disk space requeriments by skipping VEP annotation. See the "Data download" section.
+* **ATTENTION!** Approximately 46 GB of data have to be downloaded and saved in `data/` the first time the **data-manager** container is started up. Data download process can be tracked in the container log. It is possible to reduce disk space requeriments by skipping VEP annotation. See the "Data download" section.
 * To access the front-end, use your web browser with the IP or domain name of the server. Locally you can use https://localhost/.
 * You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
-* Remove the `data` directory to restart the configuration from zero.
+* Remove the `data/` directory to start the configuration from scratch.
 
 ### Setup
 - Modify the following variables in `.env` file with the details of your node:
     - Internal name of the network: `NETWORK_NAME="Network name"`
     - Internal name of the node: `NODE_NAME="Node name"`
 - Variant-server certificates are stored in the `network-configuration/` directory. If you change the default certificate filenames, please change the following variables in the `.env` file:
-    - CA Root certificate: `CA_CERT_FILENAME="ca-cert.pem"` 
+    - CA certificate: `CA_CERT_FILENAME="ca-cert.pem"` 
     - Variant-server certificate: `SERVER_CERT_FILENAME="cert.pem"` 
     - Variant-server key: `SERVER_KEY_FILENAME="key.pem"` 
 - The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to modify them and use a properly configured certificate signed by your institution's CA. You should also change the default filenames in the `.env` file:
@@ -43,7 +42,7 @@ docker compose logs -f
     - Front-end key: `FRONTEND_KEY_FILENAME="default.key"`
 
 ### Configuring the front-end password
-To access the front-end, you must configure at least one user (and password) using the HTTP Basic Authentication directive within the **nginx** container:
+To access the front-end, you must configure at least one user (and password) using the **data-manager** container:
 ```console
 cd var-node
 docker compose exec -T data-manager htpasswd -c /data/nginx/.htpasswd <username>
@@ -52,8 +51,7 @@ docker compose exec -T data-manager htpasswd -c /data/nginx/.htpasswd <username>
 \* You will be prompted for a password. Make sure you use a strong password!
 
 ### Data download
-The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
-The first time the **data-manager** container is run, approximately 46 Gb of data will be downloaded and saved in `data/`:
+The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants:
 - Fasta files (GRCh37 and GRCh38 primary assemblies from Ensembl):
     - `https://ftp.ensembl.org/pub/grch37/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz`
     - `https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`
@@ -63,7 +61,6 @@ The first time the **data-manager** container is run, approximately 46 Gb of dat
 - Vep caches (GRCh37 and GRCh38 version 111 VEP caches):
     - `https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz`
     - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
-
 \* It is possible to skip VEP annotation and reduce disk space requirements. Set the `USE_VEP=1` variable to `0` in the `.env` file before you run the project.
 \* Fasta files and chain files **must** be downloaded to use make proper queries.
 
@@ -79,9 +76,9 @@ docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
 ```
 - Only uncompressed or bgzip-compressed VCF files are allowed, and the reference genome version (grch37 or grch38) must be specified.
 - Variants from samples in the database won't be uploaded. You should merge all VCF files from a given sample and re-upload them to the database.
-- Only variants mapped to primary assembled chromosomes will be added to the database: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT
-- Variants with hg19/hg38 chromosome names will be carried over to their corresponding GRCh37/GRCh38 chromosome names.
-- Variants will be left aligned and normalised, and multiallelic sites will be split into biallelic datasets with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`.
+- Only variants mapped to primary assembled chromosomes are be added to the database: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT
+- Variants with hg19/hg38 chromosome names are changed to their corresponding GRCh37/GRCh38 chromosome names.
+- Variants are left aligned and normalised, and multiallelic sites are splitted into biallelic datasets with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`.
 - Variants with * (asterisk) or . (missing) alleles won't be included in the database.
 
 #### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples
@@ -106,7 +103,7 @@ Or alternatively, you can reset the whole database:
 ```console
 docker run -i var-node-data-manager-1 remove-all-variants <grch37|grch38> 
 ```
-\* In both cases is necessary to specify the reference genome from which the variants will be removed.
+\* In both cases, it is necessary to specify the reference genome from which the variants are to be removed.
 
 ### Network node configuration
 The default configuration have dummy certificates configured so the nginx container (IP: 172.18.0.6 / Domain: nginx / Port: 5000) can be queried without further configuration. A fake node pointing to google.com is also configured for testing purposes:
@@ -118,14 +115,14 @@ The default configuration have dummy certificates configured so the nginx contai
 ]
 ```
 
-Modify `network-configuration/nodes.json` to include the domain names or IPs from the nodes you want to connect with. These nodes will need to present SSL certificates signed by the same CA Root certificate.
+Modify `network-configuration/nodes.json` to include the domain names or IPs of the nodes you want to connect to. These nodes must present SSL certificates signed by the same CA certificate.
 
 ### Network certificate configuration
 Proper configuration of SSL certificates is essential to make **var-node** a secure way to exchange variant information:
-- It is necessary to generate a single CA root certificate and key that will be used to sign all certificates used to encrypt and authenticate communications between nodes. Use a long passphrase for the key.
-- The validity of the certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
-- The key and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes that submit their Certificate Signing Request file.
-- This root CA certificate should be distributed to each configured node along with the signed certificate.
+- It is necessary to generate a single CA certificate and key that have to be used to sign all certificates used to encrypt and authenticate communications between nodes. Use a long passphrase for the key.
+- The validity of all certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
+- The key file and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes after they have submitted their Certificate Signing Request file.
+- This CA certificate should be distributed to each configured node along with the signed certificate.
 
 #### Generate the network's CA Certificate and Key
 ```console
@@ -153,7 +150,7 @@ docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "sub
 Incoming requests must be redirected to port 5000 on the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
 
 #### SSL Passthrough
-As the name suggests, traffic is simply passed through the WAF without being decrypted and sent to port 5000 of the server hosting the Docker setup. This is the simplest configuration as it doesn't require the IT administrator to reconfigure the WAF each time the certificates are renewed. This option places more responsibility on the person managing the node, as any suspected malicious traffic will also be redirected to the node. However, it is considered more secure against third party manipulation and doesn't require maintenance by the WAF administrator.
+As the name suggests, traffic is simply passed through the WAF without being decrypted and sent to port 5000 of the server hosting the Docker setup. This is the simplest configuration as it doesn't require the IT administrator to reconfigure the WAF each time the certificates are renewed. This option places more responsibility on the person managing the node, as any hypothetical malicious traffic would also be redirected to the node. However, it is considered more secure against third party manipulation and doesn't require maintenance by the WAF administrator.
 
 #### SSL bridging/offloading
 This option requires the WAF to be configured with the network's CA and server certificates to provide SSL encryption and perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. As mentioned above, any reissuance of certificates would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. the WAF administrator) and is considered a less secure option.
