@@ -3,7 +3,7 @@
 *var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-manager**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
 *var-node* is intended to run within the private network (LAN) of an institution, so that the front-end is accessible only to the users of the institution:
-- Access to the front-end is controlled by nginx's http basic authentication directive and communication is SSL encrypted.
+- Access to the front-end is controlled by nginx's "HTTP Basic Authentication" directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
 - Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are also displayed on-the-fly in the front-end.
 - If requested, variant liftover will be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
@@ -28,7 +28,7 @@ docker compose logs -f
 * To access the front-end, use your web browser with the IP or domain name of the server. Locally you can use https://localhost/.
 * About 46 GB of data will be downloaded the first time the data manager container is started up. Data download process can be tracked in the container log. It is possible to reduce disk space requeriments by skipping VEP annotation. See the "Data download" section.
 * You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
-* Remove the whole `data` directory to restart the configuration from zero.
+* Remove the `data` directory to restart the configuration from zero.
 
 ### Setup
 - Modify the following variables in `.env` file with the details of your node:
@@ -43,11 +43,12 @@ docker compose logs -f
     - Front-end key: `FRONTEND_KEY_FILENAME="default.key"`
 
 ### Configuring the front-end password
-To access the front-end, you need to configure an http basic authentication user and password within the `nginx' container:
+To access the front-end, you must configure at least one user (and password) using the HTTP Basic Authentication directive within the `nginx' container:
 ```console
 cd var-node
-docker compose exec -T nginx
+docker compose exec nginx htpasswd -c /data/.htpasswd username
 ```
+\* You will be prompted for a password. Make sure you use a strong password!
 
 ### Data download
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants.
@@ -63,7 +64,7 @@ The first time the **data-manager** container is run, approximately 46 Gb of dat
     - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 
 \* It is possible to skip VEP annotation and reduce disk space requirements. Fasta files and chain files **must** be downloaded to use make queries.
-\* Uncomment the `USE_VEP=false` line in the `docker-compose.yml` file before you run the project.
+\* Set the `USE_VEP=true` variable to `false` in the `.env` file before you run the project.
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
