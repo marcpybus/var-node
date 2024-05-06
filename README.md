@@ -26,7 +26,7 @@ docker compose logs -f
 ```
 * **ATTENTION!** Approximately 46GB of data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
-* To access the front-end, use your web browser with the IP or domain name of the server. Locally you can use https://localhost/.
+* To access the front-end, use your web browser with the IP or domain of the server. Locally you can use https://localhost/.
 * You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
 * Remove the `data/` directory to start the configuration from scratch.
 
