@@ -43,7 +43,7 @@ docker compose logs -f
     - Front-end key: `FRONTEND_KEY_FILENAME="default.key"`
 
 ### Configuring the front-end password
-To access the front-end, you must configure at least one user (and password) using the HTTP Basic Authentication directive within the `nginx' container:
+To access the front-end, you must configure at least one user (and password) using the HTTP Basic Authentication directive within the **nginx** container:
 ```console
 cd var-node
 docker compose exec nginx htpasswd -c /data/.htpasswd username
