@@ -132,7 +132,7 @@ docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -keyout /
 ```
 #### Sign server CSR with the CA certificate and Key
 ```console
-docker compose run -T data-manager openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker compose run -T data-manager openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 365 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - `<XXX.XXX.XXX.XXX>` use your server public IP
 - `<domain.fqdn>` use your server public domain FQDN
