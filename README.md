@@ -1,10 +1,10 @@
 # var-node (**beta**)
 
-*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-manager**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authetication for communication. Variant genotypes and their metadata are stored in a MariaDB database (**mariadb**), which is populated by a tool (**data-manager**) that automatically normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
-*var-node* is intended to run within the private network (LAN) of an institution, so that the front end is accessible only to the users of the institution:
-- Access to the front end is controlled by nginx's "HTTP Basic Authentication" directive and communication is SSL encrypted.
-- Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
+*var-node* is intended to run within a private network (LAN) of an institution or organization, so that the front end is accessible only to the users from that institution:
+- Access to the front end is controlled by nginx's "HTTP Basic Authentication" directive, and communication is SSL encrypted.
+- Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all the nodes of the network.
 - Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are also displayed on-the-fly in the front end.
 - If requested, variant liftover can be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
 - Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is carried out using a certificate signed by the Network’s Own CA Certificate. Client must also provide a SSL certificate also signed by the Network’s Own CA Certificate. **nginx** can then verify client's certificate and redirect the request to the variant-server container. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
@@ -28,7 +28,7 @@ docker compose logs -f
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
 * To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can use https://localhost/.
 * You must configure a username and password before accessing the front end. See the "Configuring the front end password" section.
-* Remove the `data/` directory to start the configuration from scratch.
+* Remove the whole `data/` directory to start the configuration from scratch.
 
 ### Setup
 - Modify the following variables in `.env` file with the details of your node:
@@ -49,7 +49,7 @@ cd var-node
 docker compose run -T data-manager htpasswd -c /data/.htpasswd <username>
 ```
 - `<username>` use your user name
-- You will be prompted for a password. Make sure you use a strong password!
+- You will be prompted for a password. Make sure you use a **strong password**!
 
 ### Data download
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants:
@@ -63,7 +63,7 @@ The current setup needs to download data to perform normalisation, annotation an
     - `https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz`
     - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
 
-\* It is possible to skip VEP annotation and reduce disk space requirements. Set the `USE_VEP=1` variable to `0` in the `.env` file before you run the project. Fasta files and chain files **must** be downloaded to make variant queries.
+\* It is possible to skip VEP annotation and reduce disk space requirements. To do so, set the `USE_VEP` variable to `0` in the `.env` file before you run the project. Please note that Fasta files and chain files must be downloaded in order to make actual variant queries.
 
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
@@ -93,7 +93,7 @@ docker compose run -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C
 wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 docker run -i var-node-data-manager-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
 ```
-\* it can take few hours to upload
+\* please be aware that the upload process may take several hours.
 
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
@@ -118,7 +118,7 @@ The default configuration have dummy certificates configured so the nginx contai
 
 Modify `network-configuration/nodes.json` to include the domain names or IPs of the nodes you want to connect to. These nodes must present SSL certificates signed by the same CA certificate.
 
-### Network certificate configuration
+### Network certificates configuration
 Proper configuration of SSL certificates is essential to make **var-node** a secure way to exchange variant information:
 - It is necessary to generate a single CA certificate and key that have to be used to sign all certificates used to encrypt and authenticate communications between nodes. Use a long passphrase for the key.
 - The validity of all certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
@@ -131,8 +131,7 @@ docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:409
 ```
 - use a "very-long" passphrase to encript the key
 - `<Network-Own-CA>` use the name of your network of nodes
-  
-\* **ATTENTION:** CA certificate expiration is set to 10 years
+- **ATTENTION:** CA certificate expiration is set to 10 years
 
 #### Generate server key and Certificate Signing Request
 ```console
@@ -142,10 +141,9 @@ docker exec -it var-node-data-manager-1 openssl req -noenc -newkey rsa:4096 -key
 ```console
 docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
-- `<XXX.XXX.XXX.XXX>` use your public IP
-- `<domain.fqdn>` use your public domain FQDN
-  
-\* **ATTENTION:** server certificate expiration is set to 365 days
+- `<XXX.XXX.XXX.XXX>` use your server public IP
+- `<domain.fqdn>` use your server public domain FQDN
+- **ATTENTION:** server certificate expiration is set to 365 days
 
 ### WAF Configuration
 Incoming requests must be redirected to port 5000 on the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
@@ -154,7 +152,7 @@ Incoming requests must be redirected to port 5000 on the server hosting the Dock
 As the name suggests, traffic is simply passed through the WAF without being decrypted and sent to port 5000 of the server hosting the Docker setup. This is the simplest configuration as it doesn't require the IT administrator to reconfigure the WAF each time the certificates are renewed. This option places more responsibility on the person managing the node, as any hypothetical malicious traffic would also be redirected to the node. However, it is considered more secure against third party manipulation and doesn't require maintenance by the WAF administrator.
 
 #### SSL bridging/offloading
-This option requires the WAF to be configured with the network's CA and server certificates to provide SSL encryption and perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. As mentioned above, any reissuance of certificates would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. the WAF administrator) and is considered a less secure option.
+This option requires the WAF to be configured with the network's CA and server certificates to provide SSL encryption and perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. As mentioned above, any reissuance of certificates would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. WAF administrator) and is considered a less secure option.
 
 ### Credit
 @marcpybus
