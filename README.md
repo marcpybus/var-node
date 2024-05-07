@@ -2,10 +2,10 @@
 
 *var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authetication for communication. Variants and their metadata are stored in a MariaDB database (**mariadb**) which is populated by a tool (**data-manager**) that normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
-*var-node* is intended to run within the private network (LAN) of an institution, so that the front-end is accessible only to the users of the institution:
-- Access to the front-end is controlled by nginx's "HTTP Basic Authentication" directive and communication is SSL encrypted.
+*var-node* is intended to run within the private network (LAN) of an institution, so that the front end is accessible only to the users of the institution:
+- Access to the front end is controlled by nginx's "HTTP Basic Authentication" directive and communication is SSL encrypted.
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all configured nodes.
-- Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are also displayed on-the-fly in the front-end.
+- Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are also displayed on-the-fly in the front end.
 - If requested, variant liftover can be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
 - Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is carried out using a certificate signed by the Network’s Own CA Certificate. Client must also provide a SSL certificate also signed by the Network’s Own CA Certificate. **nginx** can then verify client's certificate and redirect the request to the variant-server container. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
 
@@ -24,10 +24,10 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-* **ATTENTION!** Approximately 46GB of data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
+* **ATTENTION:** Approximately 46GB of data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
-* To access the front-end, use your web browser with the IP or domain of the server. Locally you can use https://localhost/.
-* You must configure a username and password before accessing the front-end. See the "Configuring the front-end password" section.
+* To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can use https://localhost/.
+* You must configure a username and password before accessing the front end. See the "Configuring the front end password" section.
 * Remove the `data/` directory to start the configuration from scratch.
 
 ### Setup
@@ -42,8 +42,8 @@ docker compose logs -f
     - Front-end certificate: `FRONTEND_CERT_FILENAME="default.crt"` 
     - Front-end key: `FRONTEND_KEY_FILENAME="default.key"`
 
-### Configuring the front-end password
-To access the front-end, you must configure at least one user (and password) using the **data-manager** container:
+### Configuring the front end password
+To access the front end, you must configure at least one user (and password) using the **data-manager** container:
 ```console
 cd var-node
 docker compose run -T data-manager htpasswd -c /data/.htpasswd <username>
@@ -125,27 +125,27 @@ Proper configuration of SSL certificates is essential to make **var-node** a sec
 - The key file and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes after they have submitted their Certificate Signing Request file.
 - This CA certificate should be distributed to each configured node along with the signed certificate.
 
-#### Generate the network's CA Certificate and Key
+#### Generate the network's CA certificate and key
 ```console
-docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 36500
+docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
 ```
 - use a "very-long" passphrase to encript the key
 - `<Network-Own-CA>` use the name of your network of nodes
   
-\* **ATTENTION!** certificate expiration is set to 100 years
+\* **ATTENTION:** CA certificate expiration is set to 10 years
 
-#### Generate server Key and Certificate Signing Request
+#### Generate server key and Certificate Signing Request
 ```console
 docker exec -it var-node-data-manager-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
-#### Sign server CSR with the CA Certificate and Key
+#### Sign server CSR with the CA certificate and Key
 ```console
 docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - `<XXX.XXX.XXX.XXX>` use your public IP
 - `<domain.fqdn>` use your public domain FQDN
   
-\* **ATTENTION!** certificate expiration is set to 100 years
+\* **ATTENTION:** server certificate expiration is set to 365 days
 
 ### WAF Configuration
 Incoming requests must be redirected to port 5000 on the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
