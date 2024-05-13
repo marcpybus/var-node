@@ -185,11 +185,14 @@ async def get_data_from_nodes(genome, variant_id):
     data = []
     with open(NODES) as json_file:
         nodes = json.load(json_file)
-    async with httpx.AsyncClient( timeout = TIMEOUT, verify=CACERT,cert=(CERT, KEY)) as session:
+    #async with httpx.AsyncClient( timeout = TIMEOUT, verify=CACERT,cert=(CERT, KEY)) as session:
+    async with httpx.AsyncClient( timeout = TIMEOUT, verify=False, cert=(CERT, KEY) ) as session:
         tasks = [make_request(session, node, genome, variant_id) for node in nodes]
         responses = await asyncio.gather(*tasks, return_exceptions=True)
         print(responses, file=sys.stderr)
         for idx,r in enumerate(responses):
+            print(r.request.url, file=sys.stderr)
+            print(r.request.headers, file=sys.stderr)
             node = {}
             node["node_name"] = nodes[idx]["node_name"]
             node["node_host"] = nodes[idx]["node_host"]

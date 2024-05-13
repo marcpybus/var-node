@@ -1,6 +1,7 @@
 services:
   data-manager:
     build: data-manager/.
+    init: true
     volumes:
       - ./data-manager/apps:/apps
       - ./data:/data
@@ -63,9 +64,11 @@ services:
       CA_CERT_FILENAME: ${CA_CERT_FILENAME}
       SERVER_CERT_FILENAME: ${SERVER_CERT_FILENAME}
       SERVER_KEY_FILENAME: ${SERVER_KEY_FILENAME}
+      CLIENT_VERIFICATION: ${CLIENT_VERIFICATION}
+      WAF_IP: ${WAF_IP}
     volumes:
       - ./nginx/server-certificates:/server-certificates
-      - ./nginx/nginx.conf:/etc/nginx/templates/default.conf.template
+      - ./nginx/nginx.NEW.conf:/etc/nginx/templates/default.conf.template
       - ./network-configuration:/network-configuration
       - ./data:/data
     ports: 

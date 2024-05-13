@@ -33,5 +33,5 @@ ENV BCFTOOLS_PLUGINS="/bcftools-1.20/plugins"
 
 # RUN FLASK APP
 WORKDIR /app
-CMD gunicorn --workers=5 --bind 0.0.0.0:80 app:app
-#CMD FLASK_ENV=development flask run --host=0.0.0.0 --port 80 --reload 
+#CMD gunicorn --workers=5 --bind 0.0.0.0:80 app:app
+CMD FLASK_ENV=development flask run --host=0.0.0.0 --port 80 --reload 
