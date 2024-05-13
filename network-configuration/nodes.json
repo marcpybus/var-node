@@ -1,8 +1,4 @@
 [
     {"node_name":"DOCKER_NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
-    {"node_name":"DOCKER_NGINX_DOMAIN","node_host":"nginx","node_port":"5000"},
-    {"node_name":"DOCKER_NGINX_DOMAIN","node_host":"nginx","node_port":"5001"},
-    {"node_name":"GENLAPP_IP","node_host":"192.168.103.120","node_port":"443"},
-    {"node_name":"SERVER_IP","node_host":"192.168.103.112","node_port":"5000"},
     {"node_name":"GOOGLE.COM","node_host":"google.com","node_port":"443"}
 ]

@@ -14,9 +14,9 @@ import re
 NODES = '/network-configuration/nodes.json'
 TIMEOUT = int(os.environ['QUERY_TIMEOUT'])
 USE_VEP = int(os.environ['USE_VEP'])
-CERT = '/network-configuration/' + os.environ['SERVER_CERT_FILENAME']
-KEY = '/network-configuration/' + os.environ['SERVER_KEY_FILENAME']
-CACERT = '/network-configuration/' + os.environ['CA_CERT_FILENAME']
+CERT = '/network-configuration/' + os.environ['CLIENT_CERT_FILENAME']
+KEY = '/network-configuration/' + os.environ['CLIENT_KEY_FILENAME']
+CACERT = '/network-configuration/' + os.environ['CLIENT_CA_CERT_FILENAME']
 
 NETWORK_NAME = os.environ['NETWORK_NAME']
 NODE_NAME = os.environ['NODE_NAME']
