@@ -104,7 +104,6 @@ The default configuration have dummy certificates configured so the nginx contai
 ```
 [
     {"node_name":"DOCKER_NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
-    {"node_name":"DOCKER_NGINX_DOMAIN","node_host":"nginx","node_port":"5000"},
     {"node_name":"GOOGLE.COM","node_host":"google.com","node_port":"443"}
 ]
 ```
@@ -128,15 +127,14 @@ docker compose run -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN
 
 #### Generate server key and Certificate Signing Request
 ```console
-docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
-```
-#### Sign server CSR with the CA certificate and Key
-```console
-docker compose run -T data-manager bash -c "echo 'subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>' > /network-configuration/server-config.txt"
-docker compose run -T data-manager openssl x509 -req -extfile /network-configuration/server-config.txt -days 365 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -subj '/CN=<XXX.XXX.XXX.XXX>' -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
 - `<XXX.XXX.XXX.XXX>` use your server public IP
-- `<domain.fqdn>` use your server public domain FQDN
+
+#### Sign server CSR with the CA certificate and Key
+```console
+docker compose run -T data-manager openssl x509 -req -days 365 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+```
 - **ATTENTION:** server certificate expiration is set to 365 days
 
 ### WAF Configuration
