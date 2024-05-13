@@ -7,7 +7,7 @@
 - Requested variants are normalized and validated on the fly (`bcftools norm --check_ref`) and then forwarded to all the nodes of the network.
 - Ensembl's VEP (`ensembl-vep/vep`) is used to annotate the effect and consequence of the queried variant on genes, transcripts and proteins. Results are also displayed on-the-fly in the front end.
 - If requested, variant liftover can be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
-- Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is carried out using a certificate signed by the Network’s Own CA Certificate. Client must also provide a SSL certificate also signed by the Network’s Own CA Certificate. **nginx** can then verify client's certificate and redirect the request to the variant-server container. This setup ensures dedicated two-way SSL encryption and authentication between communicating nodes.
+- Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is natively implemented. Client must provide a SSL certificate signed by the Network’s Own CA Certificate with a CN (Common Name) matching client's public IP. Request is then authenticated and redirected to the variant-server container. This setup ensures SSL encryption and authentication for all incoming requests.
 
 ![var-node-schema-2](https://github.com/marcpybus/var-node/assets/12168869/c617ee5e-aff9-4267-901c-c43a721c8bbd)
 
@@ -34,13 +34,13 @@ docker compose logs -f
 - Modify the following variables in `.env` file with the details of your node:
     - Internal name of the network: `NETWORK_NAME="Network name"`
     - Internal name of the node: `NODE_NAME="Node name"`
-- Variant-server certificates are stored in the `network-configuration/` directory. If you change the default certificate filenames, please change the following variables in the `.env` file:
+- Client certificates are stored in the `network-configuration/` directory. If you change the default certificate filenames, please change the following variables in the `.env` file:
     - CA certificate: `CA_CERT_FILENAME="ca-cert.pem"` 
-    - Variant-server certificate: `SERVER_CERT_FILENAME="cert.pem"` 
-    - Variant-server key: `SERVER_KEY_FILENAME="key.pem"` 
-- The default installation comes with a dummy self-signed certificate and key to encrypt requests from users within the institution. These files are located in `nginx/server-certificates/`. Feel free to modify them and use a properly configured certificate signed by your institution's CA. You should also change the default filenames in the `.env` file:
-    - Front-end certificate: `FRONTEND_CERT_FILENAME="default.crt"` 
-    - Front-end key: `FRONTEND_KEY_FILENAME="default.key"`
+    - Client certificate: `CLIENT_CERT_FILENAME="client-cert.pem"` 
+    - Client key: `CLIENT_KEY_FILENAME="client-key.pem"` 
+- The default installation comes with a dummy self-signed certificate and key to encrypt all requests (internal and external). These files are located in `nginx/server-certificates/`. Feel free to modify them and use a properly configured certificate signed by your institution's CA. You should also change the default filenames in the `.env` file:
+    - Server certificate: `SERVER_CERT_FILENAME="server.crt"` 
+    - Server key: `SERVER_KEY_FILENAME="server.key"`
 
 ### Configuring the front end password
 To access the front end, you must configure at least one user (and password) using the **data-manager** container:
@@ -104,39 +104,37 @@ The default configuration have dummy certificates configured so the nginx contai
 ```
 [
     {"node_name":"DOCKER_NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
-    {"node_name":"DOCKER_NGINX_DOMAIN","node_host":"nginx","node_port":"5000"},
     {"node_name":"GOOGLE.COM","node_host":"google.com","node_port":"443"}
 ]
 ```
 
-Modify `network-configuration/nodes.json` to include the domain names or IPs of the nodes you want to connect to. These nodes must present SSL certificates signed by the same CA certificate.
+Modify `network-configuration/nodes.json` to include the domain names or IPs of the nodes you want to connect to.
 
 ### Network certificates configuration
-Proper configuration of SSL certificates is essential to make **var-node** a secure way to exchange variant information:
-- It is necessary to generate a single CA certificate and key that have to be used to sign all certificates used to encrypt and authenticate communications between nodes. Use a long passphrase for the key.
-- The validity of all certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
-- The key file and its password should be held by the network administrator, who is responsible for issuing all certificates to valid nodes after they have submitted their Certificate Signing Request file.
-- This CA certificate should be distributed to each configured node along with the signed certificate.
+Proper configuration of SSL client certificates is essential to make **var-node** a secure way to exchange variant information:
+- It is necessary to generate a single CA certificate and key that have to be used to sign all certificates used to authenticate client requests. Use a long passphrase for the key.
+- The validity of all client certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
+- The key file and its password should be held by the network administrator, who is responsible for issuing all client certificates to valid nodes after they have submitted their Certificate Signing Request file.
+- This CA certificate should be distributed to each configured node along with the signed client certificate.
 
 #### Generate the network's CA certificate and key
 ```console
-docker compose run -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
+docker compose run -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Name>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
 ```
 - use a "very-long" passphrase to encript the key
-- `<Network-Own-CA>` use the name of your network of nodes
+- `<Network-Name>` use the name of your network of nodes
 - **ATTENTION:** CA certificate expiration is set to 10 years
 
 #### Generate server key and Certificate Signing Request
 ```console
-docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
-```
-#### Sign server CSR with the CA certificate and Key
-```console
-docker compose run -T data-manager bash -c "echo 'subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>' > /network-configuration/server-config.txt"
-docker compose run -T data-manager openssl x509 -req -extfile /network-configuration/server-config.txt -days 365 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -subj '/CN=<XXX.XXX.XXX.XXX>' -keyout /network-configuration/client-key.pem -out /network-configuration/client-cert.csr
 ```
 - `<XXX.XXX.XXX.XXX>` use your server public IP
-- `<domain.fqdn>` use your server public domain FQDN
+
+#### Sign server CSR with the CA certificate and Key
+```console
+docker compose run -T data-manager openssl x509 -req -days 365 -in /network-configuration/client-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/client-cert.pem
+```
 - **ATTENTION:** server certificate expiration is set to 365 days
 
 ### WAF Configuration
