@@ -1,6 +1,6 @@
 # var-node (**beta**)
 
-*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authetication for communication. Variant genotypes and their metadata are stored in a MariaDB database (**mariadb**), which is populated by a tool (**data-manager**) that automatically normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authentication for communication. Variant genotypes and their metadata are stored in a MariaDB database (**mariadb**), which is populated by a tool (**data-manager**) that automatically normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
 *var-node* is intended to run within a private network (LAN) of an institution or organization, so that the front end is accessible only to the users from that institution:
 - Access to the front end is controlled by nginx's "HTTP Basic Authentication" directive, and communication is SSL encrypted.
@@ -28,7 +28,7 @@ docker compose logs -f
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
 * To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can use https://localhost/.
 * You must configure a username and password before accessing the front end. See the "Configuring the front end password" section.
-* Remove the whole `data/` directory to start the configuration from scratch.
+* Remove the whole `data/` directory to start the data configuration from scratch.
 
 ### Setup
 - Modify the following variables in `.env` file with the details of your node:
@@ -68,12 +68,7 @@ The current setup needs to download data to perform normalisation, annotation an
 ### Loading genomic variants from the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
 ```console
-docker run -i var-node-data-manager-1 vcf-ingestion <grch37|grch38> < file.vcf.gz
-```
-or using docker compose:
-```console
-cd var-node
-docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
+docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf.gz
 ```
 - Only uncompressed or bgzip-compressed VCF files are allowed, and the reference genome version (grch37 or grch38) must be specified.
 - Variants from samples in the database won't be uploaded. You should merge all VCF files from a given sample and re-upload them to the database.
@@ -84,25 +79,23 @@ docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
 
 #### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples
 ```console
-cd var-node
 docker compose run -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
 ```
 
 #### Load all chromosome 10 variants from 1000genomes samples
 ```console
-wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
-docker run -i var-node-data-manager-1 vcf-ingestion grch37 < ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz
+curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz | docker compose run -T data-manager vcf-ingestion grch37
 ```
 \* please be aware that the upload process may take several hours.
 
 ### Removing genomic variants from the database
 Variants from a given sample can be deleted using the folowing command:
 ```console
-docker run -i var-node-data-manager-1 remove-sample <grch37|grch38> <sample_name>
+docker compose run -T data-manager remove-sample <grch37|grch38> <sample_name>
 ```
 Or alternatively, you can reset the whole database:
 ```console
-docker run -i var-node-data-manager-1 remove-all-variants <grch37|grch38> 
+docker compose run -T data-manager remove-all-variants <grch37|grch38> 
 ```
 \* In both cases, it is necessary to specify the reference genome from which the variants are to be removed.
 
@@ -127,7 +120,7 @@ Proper configuration of SSL certificates is essential to make **var-node** a sec
 
 #### Generate the network's CA certificate and key
 ```console
-docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
+docker compose run -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Own-CA>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
 ```
 - use a "very-long" passphrase to encript the key
 - `<Network-Own-CA>` use the name of your network of nodes
@@ -135,11 +128,12 @@ docker exec -it var-node-data-manager-server-1 openssl req -x509 -newkey rsa:409
 
 #### Generate server key and Certificate Signing Request
 ```console
-docker exec -it var-node-data-manager-1 openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
+docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -keyout /network-configuration/key.pem -out /network-configuration/server-cert.csr
 ```
 #### Sign server CSR with the CA certificate and Key
 ```console
-docker exec -it var-node-data-manager-1 openssl x509 -req -extfile <(printf "subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>") -days 36500 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
+docker compose run -T data-manager bash -c "echo 'subjectAltName=DNS:<domain.fqdn>,IP:<XXX.XXX.XXX.XXX>' > /network-configuration/server-config.txt"
+docker compose run -T data-manager openssl x509 -req -extfile /network-configuration/server-config.txt -days 365 -in /network-configuration/server-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/cert.pem
 ```
 - `<XXX.XXX.XXX.XXX>` use your server public IP
 - `<domain.fqdn>` use your server public domain FQDN
