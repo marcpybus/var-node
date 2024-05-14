@@ -11,8 +11,7 @@ RUN apt update && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-#RUN pip install mariadb pysam
-RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org mariadb pysam
+RUN pip install mariadb pysam
 
 RUN wget https://github.com/samtools/bcftools/releases/download/1.20/bcftools-1.20.tar.bz2 && \
     tar xjvf /bcftools-1.20.tar.bz2 && \
