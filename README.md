@@ -16,6 +16,9 @@
 - Linux OS (i.e. Ubuntu)
 - Docker Compose
 - git
+- 2GB for Docker images
+- 2GB for Fasta and Chain files
+- 45GB for Ensembl VEP cache files (optional)
 
 #### Installation
 ```console
@@ -24,7 +27,7 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-* **ATTENTION:** Approximately 46GB of data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
+* **ATTENTION:** Approximately 48 GB of data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
 * To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can use https://localhost/.
 * You must configure a username and password before accessing the front end. See the "Configuring the front end password" section.
