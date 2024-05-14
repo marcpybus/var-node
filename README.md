@@ -16,6 +16,8 @@
 - Linux OS (i.e. Ubuntu)
 - Docker Compose
 - git
+
+#### Disk space requirements
 - 2GB for Docker images
 - 2GB for Fasta and Chain files
 - 45GB for Ensembl VEP cache files (optional)
@@ -27,7 +29,7 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-* **ATTENTION:** Approximately 48 GB of data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
+* **ATTENTION:** Approximately 48 GB of genomic data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
 * To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can use https://localhost/.
 * You must configure a username and password before accessing the front end. See the "Configuring the front end password" section.
@@ -41,7 +43,7 @@ docker compose logs -f
     - CA certificate: `CA_CERT_FILENAME="ca-cert.pem"` 
     - Client certificate: `CLIENT_CERT_FILENAME="client-cert.pem"` 
     - Client key: `CLIENT_KEY_FILENAME="client-key.pem"` 
-- The default installation comes with a dummy self-signed certificate and key to encrypt all requests (internal and external). These files are located in `nginx/server-certificates/`. Feel free to modify them and use a properly configured certificate signed by your institution's CA. You should also change the default filenames in the `.env` file:
+- The default installation comes with a self-signed certificate and key to encrypt all incoming requests. These files are located in `nginx/server-certificates/`. Feel free to modify them and use a properly configured certificate signed by your institution's CA. You should also change the default filenames in the `.env` file:
     - Server certificate: `SERVER_CERT_FILENAME="server.crt"` 
     - Server key: `SERVER_KEY_FILENAME="server.key"`
 
@@ -111,43 +113,49 @@ The default configuration have dummy certificates configured so the nginx contai
 ]
 ```
 
-Modify `network-configuration/nodes.json` to include the domain names or IPs of the nodes you want to connect to.
+Modify `network-configuration/nodes.json` to include the domain names or IPs and ports of the nodes you want to connect to.
 
 ### Network certificates configuration
 Proper configuration of SSL client certificates is essential to make **var-node** a secure way to exchange variant information:
-- It is necessary to generate a single CA certificate and key that have to be used to sign all certificates used to authenticate client requests. Use a long passphrase for the key.
-- The validity of all client certificates should be short (i.e. 365 days), forcing the reissuance of new certificates once a year.
+- It is necessary to generate a single CA certificate and key for the whole network of nodes that have to be used to sign all certificates used to authenticate client requests. Remember to use a **very long** passphrase for the key.
+- The validity of all client certificates should be short (i.e. 365 days), forcing the reissuance of new certificates regularly.
 - The key file and its password should be held by the network administrator, who is responsible for issuing all client certificates to valid nodes after they have submitted their Certificate Signing Request file.
-- This CA certificate should be distributed to each configured node along with the signed client certificate.
+- The CA certificate should be distributed to each configured node along with the signed client certificate.
 
 #### Generate the network's CA certificate and key
 ```console
 docker compose run -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Name>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
 ```
-- use a "very-long" passphrase to encript the key
+- use a **very long** passphrase to encript the key
 - `<Network-Name>` use the name of your network of nodes
 - **ATTENTION:** CA certificate expiration is set to 10 years
 
-#### Generate server key and Certificate Signing Request
+#### Generate client key and Certificate Signing Request
 ```console
 docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -subj '/CN=<XXX.XXX.XXX.XXX>' -keyout /network-configuration/client-key.pem -out /network-configuration/client-cert.csr
 ```
-- `<XXX.XXX.XXX.XXX>` use your server public IP
+- `<XXX.XXX.XXX.XXX>` use your public IP
 
-#### Sign server CSR with the CA certificate and Key
+#### Sign client CSR with the CA certificate and key
 ```console
 docker compose run -T data-manager openssl x509 -req -days 365 -in /network-configuration/client-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/client-cert.pem
 ```
-- **ATTENTION:** server certificate expiration is set to 365 days
+- **ATTENTION:** client certificate expiration is set to 365 days
 
 ### WAF Configuration
-Incoming requests must be redirected to port 5000 on the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
+Incoming requests must be redirected to port 5000 of the server hosting the Docker setup. Two different approaches can be configured with nginx, depending on the preferences of your institution's WAF administrator.
 
 #### SSL Passthrough
-As the name suggests, traffic is simply passed through the WAF without being decrypted and sent to port 5000 of the server hosting the Docker setup. This is the simplest configuration as it doesn't require the IT administrator to reconfigure the WAF each time the certificates are renewed. This option places more responsibility on the person managing the node, as any hypothetical malicious traffic would also be redirected to the node. However, it is considered more secure against third party manipulation and doesn't require maintenance by the WAF administrator.
+As the name suggests, all traffic is simply passed through the WAF without being decrypted (SSL offloading) and sent to port 5000 of the server hosting the Docker setup. This is the simplest configuration as it doesn't require further WAF configuration. This option places more responsibility on the person managing the node, as any hypothetical malicious traffic would also be redirected to the node. However, it is considered more secure against third party manipulation.
+
+- This is the current default configuration. Variable `CLIENT_VERIFICATION` must be set to `"var-node"` in the `.env` file. 
+- Beware that **nginx** will automatically match certificate's CN to client request IP to fully authenticate valid requests from valid IPs!
 
 #### SSL bridging/offloading
-This option requires the WAF to be configured with the network's CA and server certificates to provide SSL encryption and perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. As mentioned above, any reissuance of certificates would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. WAF administrator) and is considered a less secure option.
+This option requires the WAF to be configured with the network's CA certificate to perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. Any reissuance a new CA certificate would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. WAF administrator) and is considered a less secure option.
 
+- This configuration requires the `CLIENT_VERIFICATION` variable in the `.env` file to be set to `"waf"`. In addition, the `WAF_IP` variable should contain the IP of the WAF.
+- Be sure that SSL client authetication is correctly performed by WAF. All requests coming from WAF's IP will be considered as valid requests. use this configuration at your risk.
+  
 ### Credit
 @marcpybus
