@@ -155,7 +155,7 @@ As the name suggests, all traffic is simply passed through the WAF without being
 This option requires the WAF to be configured with the network's CA certificate to perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. Any reissuance a new CA certificate would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. WAF administrator) and is considered a less secure option.
 
 - This configuration requires the `CLIENT_VERIFICATION` variable in the `.env` file to be set to `"waf"`. In addition, the `WAF_IP` variable should contain the IP of the WAF.
-- Be sure that SSL client authetication is correctly performed by WAF. All requests coming from WAF's IP will be considered as valid requests. use this configuration at your risk.
+- Be sure that SSL client authetication is correctly performed by WAF. All requests coming from WAF's IP will be considered as valid requests. Use this configuration at your own risk.
   
 ### Credit
 @marcpybus
