@@ -9,7 +9,7 @@
 - If requested, variant liftover can be performed on-the-fly with bcftools (`bcftools +liftover`) using Ensembl chain files.
 - Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup. Server SSL encryption is natively implemented. Client must provide a SSL certificate signed by the Network’s Own CA Certificate with a CN (Common Name) matching client's public IP. Request is then authenticated and redirected to the variant-server container. This setup ensures SSL encryption and authentication for all incoming requests.
 
-![var-node-schema-2](https://github.com/marcpybus/var-node/assets/12168869/c617ee5e-aff9-4267-901c-c43a721c8bbd)
+![var-node-schema-2](https://github.com/marcpybus/var-node/assets/12168869/e70b2386-232c-4a70-a261-6650dbd7945a)
 
 ### Installation and configuration
 #### Requeriments
@@ -149,7 +149,7 @@ Incoming requests must be redirected to port 5000 of the server hosting the Dock
 As the name suggests, all traffic is simply passed through the WAF without being decrypted (SSL offloading) and sent to port 5000 of the server hosting the Docker setup. This is the simplest configuration as it doesn't require further WAF configuration. This option places more responsibility on the person managing the node, as any hypothetical malicious traffic would also be redirected to the node. However, it is considered more secure against third party manipulation.
 
 - This is the current default configuration. Variable `CLIENT_VERIFICATION` must be set to `"var-node"` in the `.env` file. 
-- Beware that **nginx** will automatically match certificate's CN to client request IP to fully authenticate valid requests from valid IPs!
+- Beware that **nginx** will automatically match client certificate CN to client request IP to fully authenticate valid requests from valid IPs!
 
 #### SSL bridging/offloading
 This option requires the WAF to be configured with the network's CA certificate to perform client verification during the SSL bridging/offloading process. Traffic is then redirected to port 5000 on the server hosting the Docker setup. In addition, nginx should be configured to only accept requests from the WAF's IP, which would prevent the variant server from being queried from within the institution's private network or LAN. Any reissuance a new CA certificate would require the intervention of the WAF administrator. This configuration could be more easily manipulated by a third party (i.e. WAF administrator) and is considered a less secure option.
