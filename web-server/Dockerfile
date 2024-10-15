@@ -18,7 +18,7 @@ RUN pip install flask[async] httpx pysam
 RUN git clone https://github.com/Ensembl/ensembl-vep.git && \
     cd ensembl-vep && \
     git checkout release/111 && \
-    perl INSTALL.pl --AUTO a -s homo_sapiens -y GRCh37 && \
+    perl INSTALL.pl --AUTO a && \
     cd ..
 
 # INSTALL BCFTOOLS +LIFTOVER
