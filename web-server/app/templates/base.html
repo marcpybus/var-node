@@ -183,7 +183,7 @@
             `);
             var samples_html = '<ul class="list-group">';
             for (var key in results[node_number]["samples"] ){
-              samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-3 text-left"><b>' + results[node_number]["samples"][key]["sample"] + '</b></div><div class="col-xs-1 text-left"><b>' + results[node_number]["samples"][key]["zigosity"] + '</b></div><div class="col-xs-8 text-right long-text">' + results[node_number]["samples"][key]["genotype_details"] + '</div></div>' + '</li>';
+              samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-4 text-left"><b>' + results[node_number]["samples"][key]["zigosity"] + '</b></div><div class="col-xs-8 text-right long-text">' + JSON.stringify(results[node_number]["samples"][key]["genotype_details"],null,2) + '</div></div>' + '</li>';
             }
             if( results[node_number]["samples"].length >= 50 ){
               samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-12 text-left text-danger"><i>... more than 50 samples ...</i></div></div>' + '</li>';

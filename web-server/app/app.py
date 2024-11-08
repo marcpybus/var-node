@@ -61,7 +61,7 @@ def uscs_to_grch_chromosomes(variant_id_data):
     elif variant_id_data["chromosome"] in SUPPORTED_CHROMOSOMES.keys():
         variant_id_data["chromosome"] = SUPPORTED_CHROMOSOMES[ variant_id_data["chromosome"] ]
     else:
-        variant_id_data["validation"] = "Incorrect assembled chromsome"
+        variant_id_data["validation"] = "Incorrect assembled chromosome"
     return variant_id_data
 
 def validate_variant_id_format( variant_id_data ):

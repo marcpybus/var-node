@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Madrid
 RUN apt update && \
     apt install -y wget tabix samtools gunicorn git python3 python3-pip \
-    libmariadb-dev liblzma-dev libbz2-dev zlib1g-dev libcurl4-openssl-dev \ 
+    liblzma-dev libbz2-dev zlib1g-dev libcurl4-openssl-dev \ 
     libdbi-perl libdbd-mysql-perl libarchive-zip-perl libhttp-tiny-perl libwww-perl libarchive-extract-perl libmodule-build-perl && \
     apt-get clean && \
     apt-get purge && \

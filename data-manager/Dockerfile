@@ -6,12 +6,12 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Madrid
 RUN apt update && \
     apt install -y wget tabix samtools python3 python3-pip apache2-utils \
-    libmariadb-dev liblzma-dev libbz2-dev zlib1g-dev libcurl4-openssl-dev && \
+    liblzma-dev libbz2-dev zlib1g-dev libcurl4-openssl-dev && \
     apt-get clean && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install mariadb pysam
+RUN pip install pysam "psycopg[binary,pool]"
 
 RUN wget https://github.com/samtools/bcftools/releases/download/1.20/bcftools-1.20.tar.bz2 && \
     tar xjvf /bcftools-1.20.tar.bz2 && \

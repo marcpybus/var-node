@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
-import mariadb
+import psycopg
 import sys
 import os
 
-password = os.environ['MARIADB_ROOT_PASSWORD']
-db = os.environ['MARIADB_DATABASE']
+from psycopg.rows import dict_row
+
+user = os.environ['POSTGRES_USER']
+password = os.environ['POSTGRES_PASSWORD']
+db = os.environ['POSTGRES_DB']
+
 
 reference_genome = sys.argv[1]
 sample = sys.argv[2]
@@ -26,13 +30,13 @@ if input("Are you sure you want to remove the data from " + sample + " in the da
 # MAIN WORKFLOW
 
 try:
-    conn = mariadb.connect(
-        user="root",
+    conn = psycopg.connect(
+        user=user,
         password=password,
-        host="mariadb",
-        database=db,
+        host="postgres",
+        dbname=db,
         autocommit=True )
-except mariadb.Error as e:
+except psycopg.Error as e:
    print(f"Error connecting to the database: {e}", file=sys.stderr)
    sys.exit(1)
 
@@ -41,14 +45,14 @@ cur = conn.cursor()
 print("Removing ALL genotypes from " + reference_genome + " belonging to sample " + sample + " in the vcf_genotypes table... please wait..", file=sys.stderr)
 try:
     cur.execute("DELETE FROM vcf_genotypes WHERE genome = '" + reference_genome + "' AND sample = '" + sample + "'") 
-except mariadb.Error as e:
+except psycopg.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 
 print("Removing sample " + sample + " from vcf_samples table... please wait..", file=sys.stderr)
 try:
     cur.execute("DELETE FROM vcf_samples WHERE genome = '" + reference_genome + "' AND sample = '" + sample + "'") 
-except mariadb.Error as e:
+except psycopg.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 

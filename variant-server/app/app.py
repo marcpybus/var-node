@@ -3,21 +3,23 @@ from flask import Flask
 import os
 import json
 import sys
-import mariadb
+import psycopg
+from psycopg.rows import dict_row
 
 app = Flask( __name__ )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_port=1, x_proto=1, x_prefix=1)
 
-password = os.environ['MARIADB_ROOT_PASSWORD']
-db = os.environ['MARIADB_DATABASE']
+user = os.environ['POSTGRES_USER']
+password = os.environ['POSTGRES_PASSWORD']
+db = os.environ['POSTGRES_DB']
 
 def get_genomes():
     try:
-        conn = mariadb.connect( user="root", password=password, host="mariadb", port=3306, database=db )
-    except mariadb.Error as e:
-        print(f"Error connecting to MariaDB Platform: {e}")
+        conn = psycopg.connect( user=user, password=password, host="postgres", dbname=db )
+    except psycopg.Error as e:
+        print(f"Error connecting to Postgres Platform: {e}")
         sys.exit(1)
-    cur = conn.cursor(dictionary=True)
+    cur = conn.cursor( row_factory = dict_row )
     cur.execute(" SELECT genome FROM available_genomes ")
     result = []
     for row in cur:
@@ -53,12 +55,12 @@ def show_variant_id_data(genome, variant_id):
 
         sample_data = []
         try:
-            conn = mariadb.connect( user="root", password=password, host="mariadb", port=3306, database=db )
-        except mariadb.Error as e:
-            print(f"Error connecting to MariaDB Platform: {e}")
+            conn = psycopg.connect( user=user, password=password, host="postgres", dbname=db )
+        except psycopg.Error as e:
+            print(f"Error connecting to postgres platform: {e}")
             sys.exit(1)
-        cur = conn.cursor(dictionary=True)
-        cur.execute(" SELECT * FROM vcf_genotypes WHERE genome = '%s' AND contig = '%s' AND pos = %d AND ref = '%s' AND alt = '%s' ORDER BY RAND()" % (genome,chromosome,position,reference,alternative))
+        cur = conn.cursor( row_factory = dict_row )
+        cur.execute(" SELECT zigosity, genotype_details FROM vcf_genotypes WHERE genome = %s AND contig = %s AND pos = %s AND ref = %s AND alt = %s ORDER BY RANDOM()", (genome,chromosome,position,reference,alternative))
         homozygotes = 0
         heterozygotes = 0
         allele_count = 0
