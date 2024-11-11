@@ -93,14 +93,14 @@ curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3
 ```
 \* please be aware that this upload process may take several hours.
 
-### Loading samples metadata into the database
+### Loading sample metadata into the database
 Metadata from a TSV files can be loaded into the database using the **data-manager** container:
 ```console
 docker compose run --rm -T data-manager metadata-ingestion <grch37|grch38> < metadata.tsv
 ```
 - Use tab-separated files (TSV). The reference genome version (grch37 or grch38) must be specified.
 - The first column must contain the sample name, which must match the sample ID in the VCF file. 
-- Subsequent columns in the file will be parsed into a JSON using header names as labels and the resulting JSOn will be uploaded to the database.
+- Subsequent columns in the file will be parsed into a JSON using header names as labels and the resulting JSON will be uploaded to the database.
 - Sample genotypes must already exist in the database for the associated metadata to be uploaded.
 
 #### Load metadata from 1000genomes samples
@@ -122,7 +122,7 @@ docker compose run --rm -T data-manager remove-all-variants <grch37|grch38>
 The default configuration have dummy certificates configured so the nginx container (IP: 172.18.0.6 / Domain: nginx / Port: 5000) can be queried without further configuration. A fake node pointing to google.com is also configured for testing purposes:
 ```
 [
-    {"node_name":"DOCKER_NGINX_IP","node_host":"172.18.0.6","node_port":"5000"},
+    {"node_name":"This var-node (contact@email.com)","node_host":"172.18.0.6","node_port":"5000"},
     {"node_name":"GOOGLE.COM","node_host":"google.com","node_port":"443"}
 ]
 ```
