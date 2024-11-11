@@ -1,6 +1,6 @@
 # var-node (**beta**)
 
-*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authentication for communication. Variant genotypes and their metadata are stored in a PostgreSQL database (**postgres**), which is populated by a tool (**data-manager**) that automatically normalizes genomic variants from VCF files (indel left-alignment + biallelification).
+*var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authentication for communication. Variant genotypes and associated metadata are stored in a PostgreSQL database (**postgres**), which is populated by a tool (**data-manager**) that automatically normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
 *var-node* is intended to run within a private network (LAN) of an institution or organization, so that the front end is accessible only to the users from that institution:
 - Access to the front end is controlled by nginx's "HTTP Basic Authentication" directive, and communication is SSL encrypted.
@@ -51,7 +51,7 @@ docker compose logs -f
 To access the front end, you must configure at least one user (and password) using the **data-manager** container:
 ```console
 cd var-node
-docker compose run -T data-manager htpasswd -c /data/.htpasswd <username>
+docker compose run --rm -T data-manager htpasswd -c /data/.htpasswd <username>
 ```
 - `<username>` use your user name
 - You will be prompted for a password. Make sure you use a **strong password**!
@@ -70,37 +70,52 @@ The current setup needs to download data to perform normalisation, annotation an
 
 \* It is possible to skip VEP annotation and reduce disk space requirements. To do so, set the `USE_VEP` variable to `0` in the `.env` file before you run the project. Please note that Fasta files and chain files must be downloaded in order to make actual variant queries.
 
-### Loading genomic variants from the database
+### Loading genomic variants into the database
 Variants from a VCF files can be loaded into the database using the **data-manager** container:
 ```console
-docker compose run -T data-manager vcf-ingestion <grch37|grch38> < file.vcf.gz
+docker compose run --rm -T data-manager vcf-ingestion <grch37|grch38> < file.vcf.gz
 ```
 - Only uncompressed or bgzip-compressed VCF files are allowed, and the reference genome version (grch37 or grch38) must be specified.
-- Variants from samples in the database won't be uploaded. You should merge all VCF files from a given sample and re-upload them to the database.
+- Variants from samples already present in the database won't be uploaded. You should merge all VCF files from a given sample and re-upload them to the database.
 - Only variants mapped to primary assembled chromosomes are be added to the database: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X, Y, MT
 - Variants with hg19/hg38 chromosome names are changed to their corresponding GRCh37/GRCh38 chromosome names.
-- Variants are left aligned and normalised, and multiallelic sites are splitted into biallelic datasets with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`.
+- Variants are automatically left-aligned and normalised, and multiallelic sites are splitted into biallelic datasets with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`.
 - Variants with * (asterisk) or . (missing) alleles won't be included in the database.
+
+### Loading samples metadata into the database
+Metadata from a TSV files can be loaded into the database using the **data-manager** container:
+```console
+docker compose run --rm -T data-manager metadata-ingestion <grch37|grch38> < metadata.tsv
+```
+- Use tab-separated files (TSV). The reference genome version (grch37 or grch38) must be specified.
+- The first column must contain the sample name, which must match the sample ID in the VCF file. 
+- Subsequent columns in the file will be parsed into a JSON using header names as labels and the resulting JSOn will be uploaded to the database.
+- Sample genotypes must already exist in the database for the associated metadata to be uploaded.
 
 #### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples
 ```console
-docker compose run -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
+docker compose run --rm -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
 ```
 
-#### Load all chromosome 10 variants from 1000genomes samples
+#### Load metadata from 1000genomes samples
 ```console
-curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz | docker compose run -T data-manager vcf-ingestion grch37
+docker compose run --rm -T data-manager metadata-ingestion grch37 < examples/samples.1kg.tsv
 ```
-\* please be aware that the upload process may take several hours.
 
-### Removing genomic variants from the database
-Variants from a given sample can be deleted using the folowing command:
+#### Load all chromosome 10 variants from all 1000genomes samples
 ```console
-docker compose run -T data-manager remove-sample <grch37|grch38> <sample_name>
+curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz | docker compose run --rm -T data-manager vcf-ingestion grch37
+```
+\* please be aware that this upload process may take several hours.
+
+### Removing genomic variants and sample metadata from the database
+Variants and metadata from a given sample can be deleted using the folowing command:
+```console
+docker compose run --rm -T data-manager remove-sample <grch37|grch38> <sample_name>
 ```
 Or alternatively, you can reset the whole database:
 ```console
-docker compose run -T data-manager remove-all-variants <grch37|grch38> 
+docker compose run --rm -T data-manager remove-all-variants <grch37|grch38> 
 ```
 \* In both cases, it is necessary to specify the reference genome from which the variants are to be removed.
 
@@ -124,7 +139,7 @@ Proper configuration of SSL client certificates is essential to make **var-node*
 
 #### Generate the network's CA certificate and key
 ```console
-docker compose run -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Name>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
+docker compose run --rm -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN=<Network-Name>' -keyout /network-configuration/ca-key.pem -out /network-configuration/ca-cert.pem -days 3650
 ```
 - use a **very long** passphrase to encript the key
 - `<Network-Name>` use the name of your network of nodes
@@ -132,13 +147,13 @@ docker compose run -T data-manager openssl req -x509 -newkey rsa:4096 -subj '/CN
 
 #### Generate client key and Certificate Signing Request
 ```console
-docker compose run -T data-manager openssl req -noenc -newkey rsa:4096 -subj '/CN=<XXX.XXX.XXX.XXX>' -keyout /network-configuration/client-key.pem -out /network-configuration/client-cert.csr
+docker compose run --rm -T data-manager openssl req -noenc -newkey rsa:4096 -subj '/CN=<XXX.XXX.XXX.XXX>' -keyout /network-configuration/client-key.pem -out /network-configuration/client-cert.csr
 ```
 - `<XXX.XXX.XXX.XXX>` use your public IP
 
 #### Sign client CSR with the CA certificate and key
 ```console
-docker compose run -T data-manager openssl x509 -req -days 365 -in /network-configuration/client-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/client-cert.pem
+docker compose run --rm -T data-manager openssl x509 -req -days 365 -in /network-configuration/client-cert.csr -CA /network-configuration/ca-cert.pem -CAkey /network-configuration/ca-key.pem -CAcreateserial -out /network-configuration/client-cert.pem
 ```
 - **ATTENTION:** client certificate expiration is set to 365 days
 

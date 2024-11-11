@@ -96,7 +96,7 @@
             <div class="panel panel-success top-buffer">
               <div class="panel-heading" data-toggle="collapse" data-target="#collapse_variant_id">
                 <div class="row">
-                  <div class="col-xs-11 text-left long-text"><b>Variant ID: ` + variant_id_data["variant_id"] + ` (` + variant_id_data["genome"] + `)</b></div>
+                  <div class="col-xs-11 text-left long-text"><b>Variant validation: ` + variant_id_data["variant_id"] + ` (` + variant_id_data["genome"] + `)</b></div>
                   <div class="col-xs-1 text-right"><b>` + variant_id_data["validation"] + `</b></div>
                 </div>
               </div>
@@ -122,7 +122,7 @@
             <div class="panel panel-danger">
               <div class="panel-heading">
                 <div class="row">
-                  <div class="col-xs-9 text-left long-text"><b>Variant ID: ` + variant_id_data["variant_id"] + `</b></div>
+                  <div class="col-xs-9 text-left long-text"><b>Variant validation: ` + variant_id_data["variant_id"] + `</b></div>
                   <div class="col-xs-3 text-right"><b>` + variant_id_data["validation"] + `</b></div>
                 </div>
               </div>
@@ -182,8 +182,9 @@
               </div>
             `);
             var samples_html = '<ul class="list-group">';
+            samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-1 text-left"><b>SAMPLE</b></div><div class="col-xs-1 text-left"><b>ZIGOSITY</b></div><div class="col-xs-7 text-left"><b>SAMPLE METADATA</b></div><div class="col-xs-3 text-left"><b>GENOTYPE DETAILS</b></div></div>' + '</li>';
             for (var key in results[node_number]["samples"] ){
-              samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-4 text-left"><b>' + results[node_number]["samples"][key]["zigosity"] + '</b></div><div class="col-xs-8 text-right long-text">' + JSON.stringify(results[node_number]["samples"][key]["genotype_details"],null,2) + '</div></div>' + '</li>';
+              samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-1 text-left">IND' + key + '</div><div class="col-xs-1 text-left">' + results[node_number]["samples"][key]["zigosity"] + '</div><div class="col-xs-7 text-left long-text">' + JSON.stringify(results[node_number]["samples"][key]["sample_details"],null,2) + '</div><div class="col-xs-3 text-left long-text">' + JSON.stringify(results[node_number]["samples"][key]["genotype_details"],null,2) + '</div></div>' + '</li>';
             }
             if( results[node_number]["samples"].length >= 50 ){
               samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-12 text-left text-danger"><i>... more than 50 samples ...</i></div></div>' + '</li>';

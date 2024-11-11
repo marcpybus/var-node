@@ -52,7 +52,7 @@ echo "    --> OK "
 if [ $USE_VEP == 1 ]; then
 
     echo " - GRCh37 vep cache... "
-    if [ ! -d /data/grch37/vep_cache/homo_sapiens_merged ] || [ $(du -s data/grch37/vep_cache/homo_sapiens_merged | cut -f1) -ne 19323708 ]; then
+    if [ ! -f data/grch37/vep_cache/homo_sapiens_merged/111_GRCh37/info.txt ]; then
         echo "    --> Downloading... "
         mkdir -p /data/grch37/vep_cache
         wget --no-verbose --show-progress --progress=dot:giga -O /data/grch37/vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz http://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz
@@ -62,7 +62,7 @@ if [ $USE_VEP == 1 ]; then
     echo "    --> OK "
 
     echo " - GRCh38 vep cache... "
-    if [ ! -d /data/grch38/vep_cache/homo_sapiens_merged ] || [ $(du -s data/grch38/vep_cache/homo_sapiens_merged | cut -f1) -ne 28651500 ]; then
+    if [ ! -f data/grch38/vep_cache/homo_sapiens_merged/111_GRCh38/info.txt ]; then
         echo "    --> Downloading... "
         mkdir -p /data/grch38/vep_cache
         wget --no-verbose --show-progress --progress=dot:giga -O /data/grch38/vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz http://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz

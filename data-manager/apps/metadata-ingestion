@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+
+if [[ $# -eq 0 ]] ; then
+    echo "Error: You must define a metadata file as argument."
+    exit 1
+fi
+
+TEMP_DIR=$(mktemp -d /tmp/metadata.XXXX)
+
+cat > $TEMP_DIR/metadata.tsv
+
+echo ""
+echo "Uploading samples metadata to database..."
+python3 /apps/samples-metadata-upload.py $TEMP_DIR/metadata.tsv
+
+echo ""
+rm -r $TEMP_DIR
+

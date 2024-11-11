@@ -146,7 +146,6 @@ for record in file:
                             zigosity = "HEM"
                         else:
                             zigosity = "NA"
-                        genotype_details = json.dumps(record.samples[sample].items())
                         genotype_info = {}
                         for field, value in record.samples[sample].items():
                             genotype_info[field] = value
