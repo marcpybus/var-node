@@ -82,6 +82,17 @@ docker compose run --rm -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
 - Variants are automatically left-aligned and normalised, and multiallelic sites are splitted into biallelic datasets with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`.
 - Variants with * (asterisk) or . (missing) alleles won't be included in the database.
 
+#### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples
+```console
+docker compose run --rm -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
+```
+
+#### Load all chromosome 10 variants from all 1000genomes samples
+```console
+curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz | docker compose run --rm -T data-manager vcf-ingestion grch37
+```
+\* please be aware that this upload process may take several hours.
+
 ### Loading samples metadata into the database
 Metadata from a TSV files can be loaded into the database using the **data-manager** container:
 ```console
@@ -92,22 +103,10 @@ docker compose run --rm -T data-manager metadata-ingestion <grch37|grch38> < met
 - Subsequent columns in the file will be parsed into a JSON using header names as labels and the resulting JSOn will be uploaded to the database.
 - Sample genotypes must already exist in the database for the associated metadata to be uploaded.
 
-#### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples
-```console
-docker compose run --rm -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
-```
-
 #### Load metadata from 1000genomes samples
 ```console
-docker compose run --rm -T data-manager metadata-ingestion grch37 < examples/samples.1kg.tsv
+docker compose run --rm -T data-manager metadata-ingestion grch37 < examples/integrated_call_samples_v3.20130502.ALL.tsv
 ```
-
-#### Load all chromosome 10 variants from all 1000genomes samples
-```console
-curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz | docker compose run --rm -T data-manager vcf-ingestion grch37
-```
-\* please be aware that this upload process may take several hours.
-
 ### Removing genomic variants and sample metadata from the database
 Variants and metadata from a given sample can be deleted using the folowing command:
 ```console

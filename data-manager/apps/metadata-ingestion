@@ -1,7 +1,11 @@
 #!/usr/bin/bash
 
-if [[ $# -eq 0 ]] ; then
-    echo "Error: You must define a metadata file as argument."
+if [ "$1" == "grch37" ]; then
+    GENOME="grch37"
+elif [ "$1" == "grch38" ]; then
+    GENOME="grch38"
+else
+    echo "You must define a genome version as argument: grch37 or grch38"
     exit 1
 fi
 
@@ -11,7 +15,7 @@ cat > $TEMP_DIR/metadata.tsv
 
 echo ""
 echo "Uploading samples metadata to database..."
-python3 /apps/samples-metadata-upload.py $TEMP_DIR/metadata.tsv
+python3 /apps/samples-metadata-upload.py $GENOME $TEMP_DIR/metadata.tsv
 
 echo ""
 rm -r $TEMP_DIR
