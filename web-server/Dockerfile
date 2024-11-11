@@ -17,7 +17,7 @@ RUN pip install flask[async] httpx pysam
 # INSTALL VEP  
 RUN git clone https://github.com/Ensembl/ensembl-vep.git && \
     cd ensembl-vep && \
-    git checkout release/111 && \
+    git checkout release/113 && \
     perl INSTALL.pl --AUTO a && \
     cd ..
 
