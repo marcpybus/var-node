@@ -182,9 +182,9 @@
               </div>
             `);
             var samples_html = '<ul class="list-group">';
-            samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-1 text-left"><b>SAMPLE</b></div><div class="col-xs-1 text-left"><b>ZIGOSITY</b></div><div class="col-xs-7 text-left"><b>SAMPLE METADATA</b></div><div class="col-xs-3 text-left"><b>GENOTYPE DETAILS</b></div></div>' + '</li>';
+            samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-1 text-left"><b>SAMPLE</b></div><div class="col-xs-1 text-left"><b>ZIGOSITY</b></div><div class="col-xs-7 text-left"><b>SAMPLE METADATA</b></div><div class="col-xs-3 text-left"><b>SAMPLE GENOTYPE</b></div></div>' + '</li>';
             for (var key in results[node_number]["samples"] ){
-              samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-1 text-left">IND' + key + '</div><div class="col-xs-1 text-left">' + results[node_number]["samples"][key]["zigosity"] + '</div><div class="col-xs-7 text-left long-text">' + JSON.stringify(results[node_number]["samples"][key]["sample_details"],null,2) + '</div><div class="col-xs-3 text-left long-text">' + JSON.stringify(results[node_number]["samples"][key]["genotype_details"],null,2) + '</div></div>' + '</li>';
+              samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-1 text-left">S' + key + '</div><div class="col-xs-1 text-left">' + results[node_number]["samples"][key]["zigosity"] + '</div><div class="col-xs-7 text-left long-text">' + JSON.stringify(results[node_number]["samples"][key]["sample_data"],null,2) + '</div><div class="col-xs-3 text-left long-text">' + JSON.stringify(results[node_number]["samples"][key]["genotype_data"],null,2) + '</div></div>' + '</li>';
             }
             if( results[node_number]["samples"].length >= 50 ){
               samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-12 text-left text-danger"><i>... more than 50 samples ...</i></div></div>' + '</li>';
@@ -293,7 +293,7 @@
                 <div class="modal-body">
                   <div class="row">
                     <div class="col-xs-12">
-                      <h4>Important notes</h4>
+                      <h4><b>Important notes</b></h4>
                     </div>
                   </div>
                   <div class="row top-buffer">
@@ -348,17 +348,17 @@
                   </div>
                   <div class="row top-buffer">
                     <div class="col-xs-12 text-left">
-                      - queried variant annotation is performed on-the-fly using VEP version 111 with the following vep_cache files:           
+                      - queried variant annotation is performed on-the-fly using VEP version 113 with the following vep_cache files:           
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-xs-12 text-left">
-                      &emsp;<code>https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz</code>             
+                      &emsp;<code>https://ftp.ensembl.org/pub/grch37/release-113/variation/indexed_vep_cache/homo_sapiens_merged_vep_113_GRCh37.tar.gz</code>             
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-xs-12 text-left">
-                      &emsp;<code >https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz</code>             
+                      &emsp;<code >https://ftp.ensembl.org/pub/release-113/variation/indexed_vep_cache/homo_sapiens_merged_vep_113_GRCh38.tar.gz</code>             
                     </div>
                   </div>
                   <div class="row top-buffer">

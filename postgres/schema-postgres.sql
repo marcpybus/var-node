@@ -9,7 +9,7 @@ CREATE TABLE vcf_genotypes (
   ref VARCHAR(1000) NOT NULL,
   alt VARCHAR(1000) NOT NULL,
   zigosity VARCHAR(3) NOT NULL,
-  genotype_details JSONB NOT NULL
+  genotype_data JSON NOT NULL
 );
 
 CREATE INDEX vcf_genotypes_by_genome ON vcf_genotypes (genome);
@@ -22,7 +22,7 @@ CREATE INDEX vcf_genotypes_by_alt ON vcf_genotypes (alt);
 CREATE TABLE vcf_samples (
   genome VARCHAR(6) NOT NULL,
   sample VARCHAR(50) NOT NULL,
-  sample_details JSONB,
+  sample_data JSON,
   PRIMARY KEY (genome,sample)
 );
 CREATE INDEX vcf_samples_by_genome ON vcf_samples (genome);

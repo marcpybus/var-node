@@ -32,7 +32,7 @@ def insert_genotypes(data, count_lines, contig, pos, genotypes_per_insert ):
         sys.exit(1)
     cur = conn.cursor() 
     try:
-        cur.executemany("INSERT INTO vcf_genotypes ( genome, contig, pos, ref, alt, sample, zigosity, genotype_details ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s )", data) 
+        cur.executemany("INSERT INTO vcf_genotypes ( genome, contig, pos, ref, alt, sample, zigosity, genotype_data ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s )", data) 
     except psycopg.Error as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

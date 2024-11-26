@@ -36,21 +36,21 @@ except psycopg.Error as e:
 
 cur = conn.cursor() 
 
-print("Removing ALL genomes from " + reference_genome + " in the avalaible_genomes table... please wait..", file=sys.stderr)
+print("Removing " + reference_genome + " from avalaible_genomes table... please wait..", file=sys.stderr)
 try:
     cur.execute("DELETE FROM available_genomes WHERE genome = '" + reference_genome + "'") 
 except psycopg.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 
-print("Removing ALL genotypes from " + reference_genome + " in the vcf_genotypes table... please wait..", file=sys.stderr)
+print("Removing ALL " + reference_genome + " genotypes from vcf_genotypes table... please wait..", file=sys.stderr)
 try:
     cur.execute("DELETE FROM vcf_genotypes WHERE genome = '" + reference_genome + "'") 
 except psycopg.Error as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 
-print("Removing ALL samples from " + reference_genome + " in the vcf_samples table... please wait..", file=sys.stderr)
+print("Removing ALL " + reference_genome + " samples from vcf_samples table... please wait..", file=sys.stderr)
 try:
     cur.execute("DELETE FROM vcf_samples WHERE genome = '" + reference_genome + "'") 
 except psycopg.Error as e:

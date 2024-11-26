@@ -44,7 +44,7 @@ for line in f:
         cur.execute( "SELECT sample FROM vcf_samples WHERE sample = %s AND genome = %s ", [ sample, genome ] )
         if cur.rowcount > 0:
             try:
-                cur.execute(" UPDATE vcf_samples SET sample_details = %s WHERE sample = %s AND genome = %s ", ( json.dumps(metadata), sample, genome ) ) 
+                cur.execute(" UPDATE vcf_samples SET sample_data = %s WHERE sample = %s AND genome = %s ", ( json.dumps(metadata), sample, genome ) ) 
                 print(sample, metadata, file=sys.stderr)
             except psycopg.Error as e:
                 print(f"Error: {e}", file=sys.stderr)

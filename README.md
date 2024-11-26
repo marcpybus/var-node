@@ -29,7 +29,7 @@ cd var-node
 docker compose up --build -d
 docker compose logs -f
 ```
-* **ATTENTION:** Approximately 48 GB of genomic data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Data download" section.
+* **ATTENTION:** Approximately 48 GB of genomic data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Automatic data download" section.
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
 * To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can use https://localhost/.
 * You must configure a username and password before accessing the front end. See the "Configuring the front end password" section.
@@ -56,17 +56,17 @@ docker compose run --rm -T data-manager htpasswd -c /data/.htpasswd <username>
 - `<username>` use your user name
 - You will be prompted for a password. Make sure you use a **strong password**!
 
-### Data download
+### Automatic data download
 The current setup needs to download data to perform normalisation, annotation and liftover of genomic variants:
 - Fasta files (GRCh37 and GRCh38 primary assemblies from Ensembl):
-    - `https://ftp.ensembl.org/pub/grch37/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz`
-    - `https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`
+    - `https://ftp.ensembl.org/pub/grch37/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz`
+    - `https://ftp.ensembl.org/pub/release-113/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz`
 - Chain files (GRCh37 to GRCh38 and GRCh38 to GRCh38 liftover files):
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh37_to_GRCh38.chain.gz`
     - `https://ftp.ensembl.org/pub/assembly_mapping/homo_sapiens/GRCh38_to_GRCh37.chain.gz`
-- Vep caches (GRCh37 and GRCh38 version 111 VEP caches):
-    - `https://ftp.ensembl.org/pub/grch37/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh37.tar.gz`
-    - `https://ftp.ensembl.org/pub/release-111/variation/indexed_vep_cache/homo_sapiens_merged_vep_111_GRCh38.tar.gz`
+- Vep caches (GRCh37 and GRCh38 version 113 VEP caches):
+    - `https://ftp.ensembl.org/pub/grch37/release-113/variation/indexed_vep_cache/homo_sapiens_merged_vep_113_GRCh37.tar.gz`
+    - `https://ftp.ensembl.org/pub/release-113/variation/indexed_vep_cache/homo_sapiens_merged_vep_113_GRCh38.tar.gz`
 
 \* It is possible to skip VEP annotation and reduce disk space requirements. To do so, set the `USE_VEP` variable to `0` in the `.env` file before you run the project. Please note that Fasta files and chain files must be downloaded in order to make actual variant queries.
 
@@ -91,7 +91,7 @@ docker compose run --rm -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4
 ```console
 curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz | docker compose run --rm -T data-manager vcf-ingestion grch37
 ```
-\* please be aware that this upload process may take several hours.
+\* please be aware that this upload process may take many hours.
 
 ### Loading sample metadata into the database
 Metadata from a TSV files can be loaded into the database using the **data-manager** container:

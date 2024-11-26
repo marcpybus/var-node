@@ -60,7 +60,7 @@ def show_variant_id_data(genome, variant_id):
             print(f"Error connecting to postgres platform: {e}")
             sys.exit(1)
         cur = conn.cursor( row_factory = dict_row )
-        cur.execute(" SELECT vcf_genotypes.zigosity, vcf_genotypes.genotype_details, vcf_samples.sample_details FROM vcf_genotypes LEFT JOIN vcf_samples ON vcf_genotypes.sample = vcf_samples.sample AND vcf_genotypes.genome = vcf_samples.genome WHERE vcf_genotypes.genome = %s AND vcf_genotypes.contig = %s AND vcf_genotypes.pos = %s AND vcf_genotypes.ref = %s AND vcf_genotypes.alt = %s ORDER BY RANDOM()", (genome,chromosome,position,reference,alternative))
+        cur.execute(" SELECT vcf_genotypes.zigosity, vcf_genotypes.genotype_data, vcf_samples.sample_data FROM vcf_genotypes LEFT JOIN vcf_samples ON vcf_genotypes.sample = vcf_samples.sample AND vcf_genotypes.genome = vcf_samples.genome WHERE vcf_genotypes.genome = %s AND vcf_genotypes.contig = %s AND vcf_genotypes.pos = %s AND vcf_genotypes.ref = %s AND vcf_genotypes.alt = %s ORDER BY RANDOM()", (genome,chromosome,position,reference,alternative))
         homozygotes = 0
         heterozygotes = 0
         allele_count = 0
