@@ -82,14 +82,20 @@ docker compose run --rm -T data-manager vcf-ingestion <grch37|grch38> < file.vcf
 - Variants are automatically left-aligned and normalised, and multiallelic sites are splitted into biallelic datasets with `bcftools norm --fasta-ref $FASTA --multiallelics -any --check-ref wx`.
 - Variants with * (asterisk) or . (missing) alleles won't be included in the database.
 
-#### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples
+#### Load one variant (CUBN:c.4675C>T:p.Pro1559Ser) from 1000genomes samples (GRCh37)
 ```console
 docker compose run --rm -T data-manager vcf-ingestion grch37 < examples/CUBN_c.4675_C_T_p.Pro1559Ser.1kg.vcf.gz
 ```
 
-#### Load all chromosome 10 variants from all 1000genomes samples
+#### Load all chromosome 10 variants from all 1000genomes samples (GRCh37)
 ```console
 curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr10.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz | docker compose run --rm -T data-manager vcf-ingestion grch37
+```
+\* please be aware that this upload process may take many hours.
+
+#### Load all chromosome 10 variants from all 1000genomes samples (GRCh38)
+```console
+curl http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.chr10.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz | docker compose run --rm -T data-manager vcf-ingestion grch38
 ```
 \* please be aware that this upload process may take many hours.
 

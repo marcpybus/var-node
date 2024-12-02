@@ -2,6 +2,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask
 from flask import render_template
 from flask import redirect
+from psycopg.rows import dict_row
+import psycopg
 import sys
 import os
 import httpx
@@ -17,6 +19,10 @@ USE_VEP = int(os.environ['USE_VEP'])
 CERT = '/network-configuration/' + os.environ['CLIENT_CERT_FILENAME']
 KEY = '/network-configuration/' + os.environ['CLIENT_KEY_FILENAME']
 CACERT = '/network-configuration/' + os.environ['CLIENT_CA_CERT_FILENAME']
+
+user = os.environ['POSTGRES_USER']
+password = os.environ['POSTGRES_PASSWORD']
+db = os.environ['POSTGRES_DB']
 
 NETWORK_NAME = os.environ['NETWORK_NAME']
 NODE_NAME = os.environ['NODE_NAME']
@@ -49,6 +55,21 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_port=1, x_proto=1, x_
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # FUNCTIONS
+
+def get_stats_data():
+    stats_data = []
+    try:
+        conn = psycopg.connect( user=user, password=password, host="postgres", dbname=db )
+    except psycopg.Error as e:
+        print(f"Error connecting to postgres platform: {e}")
+        sys.exit(1)
+    cur = conn.cursor( row_factory = dict_row )
+    cur.execute(" SELECT node_name, requests FROM requesting_nodes")
+    for row in cur:
+        stats_data.append(row)
+    cur.close()
+    conn.close()
+    return stats_data
 
 def validate_genome_format(variant_id_data):
     if variant_id_data["genome"] not in SUPPORTED_GENOMES.keys():
@@ -217,16 +238,19 @@ async def get_data_from_nodes(genome, variant_id):
 
 @app.route('/')
 async def index(variant_id = '', genome = ''):
-    return render_template("base.html", variant_id_data = None, results = None, node_name = NODE_NAME, network_name = NETWORK_NAME )
+    stats_data = get_stats_data()
+    return render_template("base.html", stats_data = stats_data, variant_id_data = None, results = None, node_name = NODE_NAME, network_name = NETWORK_NAME )
 
 @app.route('/info')
 async def info(variant_id = '', genome = ''):
+    stats_data = get_stats_data()
     results = await get_data_from_nodes(genome, variant_id)
-    return render_template("base.html", variant_id_data = {"variant_id":variant_id}, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME )
+    return render_template("base.html", stats_data = stats_data, variant_id_data = {"variant_id":variant_id}, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME )
 
 @app.route('/<genome>/<variant_id>')
 async def show_variant_id_results(genome, variant_id):
     results = {}
+    stats_data = get_stats_data()
     variant_id_data = { "validation": "OK", "variant_id": variant_id, "genome": genome }
     variant_id_data = validate_genome_format(variant_id_data)
     if variant_id_data["validation"] == "OK":
@@ -239,7 +263,7 @@ async def show_variant_id_results(genome, variant_id):
                     variant_id_data = variant_id_annotation(variant_id_data)
                     if variant_id_data["validation"] == "OK":
                         results = await get_data_from_nodes(genome, variant_id)
-    return render_template("base.html", variant_id_data = variant_id_data, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME)
+    return render_template("base.html", stats_data = stats_data, variant_id_data = variant_id_data, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME)
     
 @app.route('/json/<genome>/<variant_id>')
 async def show_variant_id_json(genome, variant_id):

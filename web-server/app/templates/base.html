@@ -12,9 +12,11 @@
   <link href="{{ url_for('static', filename='font-awesome/css/font-awesome.min.css')}}" rel='stylesheet'type="text/css" media="all">
   <script type="text/javascript">
 
+    var stats_data = JSON.parse('{{ stats_data|tojson }}');
     var variant_id_data = JSON.parse('{{ variant_id_data|tojson }}');
     var results = JSON.parse('{{ results|tojson }}');
 
+    console.log(stats_data);
     console.log(variant_id_data);
     console.log(results);
 
@@ -90,6 +92,18 @@
         }
       });
 
+      if( stats_data ){
+        var stats_html = '<ul class="list-group">';
+          stats_html = stats_html + '<li class="list-group-item"><div class="row"><div class="col-xs-6 text-left"><b>NODE NAME</b></div><div class="col-xs-2 text-left"><b>REQUESTS</b></div></div>' + '</li>';
+          for (var key in stats_data ){
+            stats_html = stats_html + '<li class="list-group-item"><div class="row"><div class="col-xs-6 text-left">' + stats_data[key]["node_name"] + '</div><div class="col-xs-2 text-left">' + stats_data[key]["requests"] + '</div></div>' + '</li>';
+        }
+        stats_html = stats_html + '</ul>';
+        $('#statistics-info').append(stats_html);
+      }else{
+        $('#statistics-info').append('<span>No statistics recorded.</span>');
+      }
+
       if( variant_id_data["variant_id"] ){
         if(  variant_id_data["validation"] == "OK" ){
           $('#variant-info').append(`
@@ -133,17 +147,45 @@
       if( results ){
         for (var node_number in results ){
           if( results[node_number]["error"] == "Ready" ){
+            var avalaible_html = "";
+            var genome_data_html = "";
+            for (var key in results[node_number]["database_genomes"] ){
+              avalaible_html = avalaible_html + ' ' + results[node_number]["database_genomes"][key]["genome"];
+              genome_data_html = genome_data_html + `
+                <div class="row">
+                  <div class="col-xs-3 text-right"><b>Samples in this node: </b></div>
+                  <div class="col-xs-1 text-left">` + results[node_number]["database_genomes"][key]["num_samples"] + `</div>
+                  <div class="col-xs-3 text-right"><b>Genotypes in this node: </b></div>
+                  <div class="col-xs-1 text-left">` + results[node_number]["database_genomes"][key]["num_genotypes"] + `</div>
+                  <div class="col-xs-2 text-right"><b>Genome: </b></div>
+                  <div class="col-xs-1 text-left">` + results[node_number]["database_genomes"][key]["genome"] + `</div>
+                </div>`;
+            }
             $('#nodes-data').append(`
               <div class="panel panel-success">
-                <div class="panel-heading">
+                <div class="panel-heading" data-toggle="collapse" data-target="#collapse` + node_number + `">
                   <div class="row">
                     <div class="col-xs-6 text-left"><b>` + results[node_number]["node_name"] + ` (` + results[node_number]["node_host"] + `:` + results[node_number]["node_port"] + `)</b></div>
-                    <div class="col-xs-6 text-right"><b>Avalaible genomes: ` + results[node_number]["database_genomes"]+ `</b></div>
+                    <div class="col-xs-6 text-right"><b>Avalaible genomes: ` + avalaible_html + `</b></div>
+                  </div>
+                </div>
+                <div id="collapse` + node_number + `" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    <div class="row">
+                      <div id="genomes-data-`+node_number+`"></div>
+                    </div>
                   </div>
                 </div>
               </div>
             `);
+            $('#genomes-data-' + node_number).append(genome_data_html);
           }else if( results[node_number]["error"] == "OK" ){
+            var ref_key = 0;
+            for (var key in results[node_number]["database_genomes"] ){
+              if( results[node_number]["database_genomes"][key]["genome"] == results[node_number]["genome"] ){
+                ref_key = key;
+              }
+            }
             $('#nodes-data').append(`
               <div class="panel-group">
                 <div class="panel panel-success">
@@ -158,10 +200,6 @@
                       <div class="row">
                         <div class="col-xs-2 text-right"><b>Variant ID: </b></div>
                         <div class="col-xs-10 text-left long-text">` + results[node_number]["variant_id"] + `</div>
-                      </div>
-                      <div class="row">
-                        <div class="col-xs-2 text-right"><b>Genome: </b></div>
-                        <div class="col-xs-10 text-left">` + results[node_number]["genome"] + `</div>
                       </div>
                       <div class="row">
                         <div class="col-xs-2 text-right"><b>Allele count: </b></div>
@@ -189,6 +227,14 @@
             if( results[node_number]["samples"].length >= 50 ){
               samples_html = samples_html + '<li class="list-group-item"><div class="row"><div class="col-xs-12 text-left text-danger"><i>... more than 50 samples ...</i></div></div>' + '</li>';
             }
+            samples_html = samples_html + `<li class="list-group-item"><div class="row">
+                        <div class="col-xs-3 text-right"><b>Samples in this node: </b></div>
+                        <div class="col-xs-1 text-left">` + results[node_number]["database_genomes"][ref_key]["num_samples"] + `</div>
+                        <div class="col-xs-3 text-right"><b>Genotypes in this node: </b></div>
+                        <div class="col-xs-1 text-left">` + results[node_number]["database_genomes"][ref_key]["num_genotypes"] + `</div>
+                        <div class="col-xs-2 text-right"><b>Genome: </b></div>
+                        <div class="col-xs-1 text-left">` + results[node_number]["database_genomes"][ref_key]["genome"] + `</div>
+                      </div>` + '</li>';
             samples_html = samples_html + '</ul>';
             $('#samples-data-' + node_number).append(samples_html);
           }else{
@@ -384,6 +430,16 @@
                   <div class="row top-buffer">
                     <div class="col-xs-12 text-left">
                       - a maximum of 50 random samples per node will be shown     
+                    </div>
+                  </div>
+                  <div class="row top-buffer">
+                    <div class="col-xs-12">
+                      <h4><b>Usage statistics</b></h4>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-xs-12 text-left">
+                      <div id="statistics-info"></div>     
                     </div>
                   </div>
                 </div>

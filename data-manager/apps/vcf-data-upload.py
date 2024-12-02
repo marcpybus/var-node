@@ -18,6 +18,30 @@ db = os.environ['POSTGRES_DB']
 genotypes_per_insert = 1000000
 
 # FUNCTIONS
+
+def update_available_genomes(genome):
+    try:
+        conn = psycopg.connect(
+            user=user,
+            password=password,
+            host="postgres",
+            dbname=db,
+            autocommit=True )
+    except psycopg.Error as e:
+        print(f"Error connecting to the database: {e}", file=sys.stderr)
+        sys.exit(1)
+    cur = conn.cursor() 
+    try:
+        cur.execute( "UPDATE available_genomes SET num_genotypes = ( SELECT COUNT(*) AS count FROM vcf_genotypes WHERE genome = %s ) WHERE genome = %s ", [genome,genome] ) 
+    except psycopg.Error as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    try:
+        cur.execute( "UPDATE available_genomes SET num_samples = ( SELECT COUNT(*) AS count FROM vcf_samples WHERE genome = %s ) WHERE genome = %s ", [genome,genome]  ) 
+    except psycopg.Error as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
 def insert_genotypes(data, count_lines, contig, pos, genotypes_per_insert ):
     print(" - Inserting " + str(genotypes_per_insert) + " genotypes to database... " + str(count_lines) + " entries processed... please wait... (" + str(contig) + "-" + str(pos) + ") (" + str( round(time.time()) ) + " unix-time)", file=sys.stderr)
     try:
@@ -160,7 +184,7 @@ for record in file:
 if data:
     print("Inserting last block of genotypes...", file=sys.stderr)
     insert_genotypes(data, count_lines, contig, pos, len(data) )
-
+    update_available_genomes(genome)
     print("Uploading of VCF genotypes has finished!", file=sys.stderr)
     print(" ", file=sys.stderr)
 else:

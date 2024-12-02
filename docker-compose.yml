@@ -24,6 +24,9 @@ services:
       CLIENT_KEY_FILENAME: ${CLIENT_KEY_FILENAME}
       NETWORK_NAME: ${NETWORK_NAME}
       NODE_NAME: ${NODE_NAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
       USE_VEP: ${USE_VEP}
     volumes:
       - ./web-server/app:/app

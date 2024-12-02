@@ -30,6 +30,14 @@ CREATE INDEX vcf_samples_by_sample ON vcf_samples (sample);
 
 CREATE TABLE available_genomes (
   genome VARCHAR(6) NOT NULL,
+  num_samples serial,
+  num_genotypes BIGSERIAL,
   PRIMARY KEY (genome)
+);
+
+CREATE TABLE requesting_nodes (
+  node_name VARCHAR(255) NOT NULL,
+  requests BIGSERIAL,
+  PRIMARY KEY (node_name)
 );
 

@@ -1,5 +1,5 @@
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask import Flask
+from flask import Flask, request
 import os
 import json
 import sys
@@ -20,10 +20,10 @@ def get_genomes():
         print(f"Error connecting to Postgres Platform: {e}")
         sys.exit(1)
     cur = conn.cursor( row_factory = dict_row )
-    cur.execute(" SELECT genome FROM available_genomes ")
+    cur.execute(" SELECT genome, num_samples, num_genotypes FROM available_genomes ")
     result = []
     for row in cur:
-        result.append(row["genome"])
+        result.append(row)
     cur.close()
     conn.close()
     return result
@@ -40,13 +40,31 @@ def show_node_data():
 @app.route('/<string:genome>/<string:variant_id>')
 def show_variant_id_data(genome, variant_id):
 
+    requesting_node = request.headers.get("Requesting-Node")
+    print(requesting_node, file=sys.stderr)
+
+    try:
+        conn = psycopg.connect( user=user, password=password, host="postgres", dbname=db, autocommit=True)
+    except psycopg.Error as e:
+        print(f"Error connecting to postgres platform: {e}")
+        sys.exit(1)
+    cur = conn.cursor()
+    try:
+        cur.execute("INSERT INTO requesting_nodes ( node_name, requests ) VALUES ( %s, %s ) ON CONFLICT (node_name) DO UPDATE SET requests = requesting_nodes.requests + 1", [requesting_node,1]) 
+    except psycopg.Error as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)    
+
     output = {}
+    genomes_list = []
     database_genomes = get_genomes()
+    for genome_entry in database_genomes:
+        genomes_list.append(genome_entry["genome"])
     output["database_genomes"] = database_genomes
     output["variant_id"] = variant_id
     output["samples"] = []
 
-    if genome in database_genomes:
+    if genome in genomes_list:
 
         chromosome  = variant_id.split("-")[0]
         position  = int(variant_id.split("-")[1])
