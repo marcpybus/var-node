@@ -109,7 +109,7 @@ docker compose run --rm -T data-manager metadata-ingestion <grch37|grch38> < met
 - Subsequent columns in the file will be parsed into a JSON using header names as labels and the resulting JSON will be uploaded to the database.
 - Sample genotypes must already exist in the database for the associated metadata to be uploaded.
 
-#### Load metadata from 1000genomes samples
+#### Load metadata from 1000genomes samples (GRCh37)
 ```console
 docker compose run --rm -T data-manager metadata-ingestion grch37 < examples/integrated_call_samples_v3.20130502.ALL.tsv
 ```
@@ -128,7 +128,7 @@ docker compose run --rm -T data-manager remove-all-variants <grch37|grch38>
 The default configuration have dummy certificates configured so the nginx container (IP: 172.18.0.6 / Domain: nginx / Port: 5000) can be queried without further configuration. A fake node pointing to google.com is also configured for testing purposes:
 ```
 [
-    {"node_name":"This var-node (contact@email.com)","node_host":"172.18.0.6","node_port":"5000"},
+    {"node_name":"This var-node","node_host":"172.18.0.6","node_port":"5000"},
     {"node_name":"GOOGLE.COM","node_host":"google.com","node_port":"443"}
 ]
 ```

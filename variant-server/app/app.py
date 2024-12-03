@@ -13,6 +13,9 @@ user = os.environ['POSTGRES_USER']
 password = os.environ['POSTGRES_PASSWORD']
 db = os.environ['POSTGRES_DB']
 
+node_name = os.environ['NODE_NAME']
+contact_email = os.environ['CONTACT_EMAIL']
+
 def get_genomes():
     try:
         conn = psycopg.connect( user=user, password=password, host="postgres", dbname=db )
@@ -95,6 +98,8 @@ def show_variant_id_data(genome, variant_id):
 
         output["error"] = "OK"
         output["genome"] = genome
+        output["node_name"] = node_name
+        output["contact_email"] = contact_email
         output["homozygotes"] = homozygotes
         output["heterozygotes"] = heterozygotes
         output["allele_count"] = allele_count

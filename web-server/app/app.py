@@ -215,9 +215,9 @@ async def get_data_from_nodes(genome, variant_id):
             print(r.request.url, file=sys.stderr)
             print(r.request.headers, file=sys.stderr)
             node = {}
-            node["node_name"] = nodes[idx]["node_name"]
-            node["node_host"] = nodes[idx]["node_host"]
-            node["node_port"] = nodes[idx]["node_port"]
+            node["request_node_name"] = nodes[idx]["node_name"]
+            node["request_node_host"] = nodes[idx]["node_host"]
+            node["request_node_port"] = nodes[idx]["node_port"]
             node["database_genomes"] = []
             if hasattr(r,"status_code"):
                 if r.status_code == httpx.codes.OK:

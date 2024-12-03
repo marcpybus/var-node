@@ -184,6 +184,7 @@ for record in file:
 if data:
     print("Inserting last block of genotypes...", file=sys.stderr)
     insert_genotypes(data, count_lines, contig, pos, len(data) )
+    print("Updating sample / genotype statistics...", file=sys.stderr)
     update_available_genomes(genome)
     print("Uploading of VCF genotypes has finished!", file=sys.stderr)
     print(" ", file=sys.stderr)
