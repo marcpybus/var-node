@@ -1,4 +1,4 @@
-# var-node (**beta**)
+# var-node-jwt (**beta**)
 
 *var-node* is a Docker Compose setup that allows to share genomic variants securely across a group of public nodes. It consists of two Flask applications (**variant-server** and **web-server**) behind a reverse-proxy (**nginx**) that implements client SSL authentication for communication. Variant genotypes and associated metadata are stored in a PostgreSQL database (**postgres**), which is populated by a tool (**data-manager**) that automatically normalizes genomic variants from VCF files (indel left-alignment + biallelification).
 
