@@ -12,7 +12,7 @@ RUN apt update && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install flask[async] httpx pysam "psycopg[binary,pool]"
+RUN pip install flask[async] flask-jwt-extended httpx pysam cryptography "psycopg[binary,pool]"
 
 # INSTALL VEP  
 RUN git clone https://github.com/Ensembl/ensembl-vep.git && \

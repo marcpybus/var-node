@@ -3,6 +3,9 @@ from flask import Flask
 from flask import render_template
 from flask import redirect
 from psycopg.rows import dict_row
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import JWTManager
+from cryptography.fernet import Fernet
 import psycopg
 import sys
 import os
@@ -12,20 +15,8 @@ import asyncio
 import tempfile
 import subprocess
 import re
+import base64
 
-NODES = '/network-configuration/nodes.json'
-TIMEOUT = int(os.environ['QUERY_TIMEOUT'])
-USE_VEP = int(os.environ['USE_VEP'])
-CERT = '/network-configuration/' + os.environ['CLIENT_CERT_FILENAME']
-KEY = '/network-configuration/' + os.environ['CLIENT_KEY_FILENAME']
-CACERT = '/network-configuration/' + os.environ['CLIENT_CA_CERT_FILENAME']
-
-user = os.environ['POSTGRES_USER']
-password = os.environ['POSTGRES_PASSWORD']
-db = os.environ['POSTGRES_DB']
-
-NETWORK_NAME = os.environ['NETWORK_NAME']
-NODE_NAME = os.environ['NODE_NAME']
 
 SUPPORTED_CHROMOSOMES = {
     "chr1": "1",    "chr2": "2",    "chr3": "3",    "chr4": "4",    "chr5": "5",
@@ -53,8 +44,44 @@ SUPPORTED_GENOMES = {
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_port=1, x_proto=1, x_prefix=1)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["JWT_SECRET_KEY"] = os.environ['JWT_SECRET_KEY']  
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = int(os.environ['JWT_ACCESS_TOKEN_EXPIRES'])
+jwt = JWTManager(app)
+
+NODES = '/network-configuration/nodes.json'
+TIMEOUT = int(os.environ['QUERY_TIMEOUT'])
+USE_VEP = int(os.environ['USE_VEP'])
+RESPONSE_ENCRYPTION = int(os.environ['RESPONSE_ENCRYPTION'])
+JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+
+user = os.environ['POSTGRES_USER']
+password = os.environ['POSTGRES_PASSWORD']
+db = os.environ['POSTGRES_DB']
+
+NETWORK_NAME = os.environ['NETWORK_NAME']
+NODE_NAME = os.environ['NODE_NAME']
 
 # FUNCTIONS
+
+def encrypt_data(data):
+    if RESPONSE_ENCRYPTION:
+        code_bytes = JWT_SECRET_KEY.encode("utf-8")
+        key = base64.urlsafe_b64encode(code_bytes.ljust(32)[:32])
+        f = Fernet(key)
+        encrypted_data = f.encrypt(data.encode())
+        return encrypted_data
+    else:
+        return data
+
+def decrypt_data(encrypted_data):
+    if RESPONSE_ENCRYPTION:
+        code_bytes = JWT_SECRET_KEY.encode("utf-8")
+        key = base64.urlsafe_b64encode(code_bytes.ljust(32)[:32])
+        f = Fernet(key)
+        decrypted_data = f.decrypt(encrypted_data).decode()
+        return decrypted_data
+    else:
+        return encrypted_data
 
 def get_stats_data():
     stats_data = []
@@ -195,20 +222,20 @@ def make_lift_over(variant_id_data):
                         variant_id_data["new_variant_id"] = variant_id_data["new_chromosome"] + "-" + variant_id_data["new_position"] + "-" + variant_id_data["new_reference"] + "-" + variant_id_data["new_alternative"]
     return variant_id_data
 
-async def make_request(session, node, genome, variant_id):
+async def make_request(session, node, genome, variant_id, token):
+    headers = { "Authorization": "Bearer " + token }
     if genome and variant_id:
         url = 'https://' + node["node_host"] + ':' + node["node_port"] + '/' + genome + '/' + variant_id
     else:
         url = 'https://' + node["node_host"] + ':' + node["node_port"] + '/info'
-    return await session.get( url )
+    return await session.get( url, headers=headers )
 
-async def get_data_from_nodes(genome, variant_id):
+async def get_data_from_nodes(genome, variant_id, token):
     data = []
     with open(NODES) as json_file:
         nodes = json.load(json_file)
-    #async with httpx.AsyncClient( timeout = TIMEOUT, verify=CACERT,cert=(CERT, KEY)) as session:
-    async with httpx.AsyncClient( timeout = TIMEOUT, verify=False, cert=(CERT, KEY) ) as session:
-        tasks = [make_request(session, node, genome, variant_id) for node in nodes]
+    async with httpx.AsyncClient( timeout = TIMEOUT, verify=False ) as session:
+        tasks = [make_request(session, node, genome, variant_id, token) for node in nodes]
         responses = await asyncio.gather(*tasks, return_exceptions=True)
         print(responses, file=sys.stderr)
         for idx,r in enumerate(responses):
@@ -221,7 +248,7 @@ async def get_data_from_nodes(genome, variant_id):
             node["database_genomes"] = []
             if hasattr(r,"status_code"):
                 if r.status_code == httpx.codes.OK:
-                    node.update( json.loads(r.text) )
+                    node.update( json.loads(decrypt_data(r.text)) )
                 else:
                     node["error"] = r.status_code
             elif hasattr(r,"reason"):
@@ -243,13 +270,15 @@ async def index(variant_id = '', genome = ''):
 
 @app.route('/info')
 async def info(variant_id = '', genome = ''):
+    token = create_access_token(identity=NODE_NAME)
     stats_data = get_stats_data()
-    results = await get_data_from_nodes(genome, variant_id)
+    results = await get_data_from_nodes(genome, variant_id, token)
     return render_template("base.html", stats_data = stats_data, variant_id_data = {"variant_id":variant_id}, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME )
 
 @app.route('/<genome>/<variant_id>')
 async def show_variant_id_results(genome, variant_id):
     results = {}
+    token = create_access_token(identity=NODE_NAME)
     stats_data = get_stats_data()
     variant_id_data = { "validation": "OK", "variant_id": variant_id, "genome": genome }
     variant_id_data = validate_genome_format(variant_id_data)
@@ -262,12 +291,13 @@ async def show_variant_id_results(genome, variant_id):
                 if variant_id_data["validation"] == "OK":
                     variant_id_data = variant_id_annotation(variant_id_data)
                     if variant_id_data["validation"] == "OK":
-                        results = await get_data_from_nodes(genome, variant_id)
+                        results = await get_data_from_nodes(genome, variant_id, token)
     return render_template("base.html", stats_data = stats_data, variant_id_data = variant_id_data, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME)
     
 @app.route('/json/<genome>/<variant_id>')
 async def show_variant_id_json(genome, variant_id):
     results = {}
+    token = create_access_token(identity=NODE_NAME)
     variant_id_data = { "validation": "OK", "variant_id": variant_id, "genome": genome }
     variant_id_data = validate_genome_format(variant_id_data)
     if variant_id_data["validation"] == "OK":
@@ -279,7 +309,7 @@ async def show_variant_id_json(genome, variant_id):
                 if variant_id_data["validation"] == "OK":
                     variant_id_data = variant_id_annotation(variant_id_data)
                     if variant_id_data["validation"] == "OK":
-                        results = await get_data_from_nodes(genome, variant_id)
+                        results = await get_data_from_nodes(genome, variant_id, token)
     return render_template("json.html", variant_id_data = variant_id_data, results = results, node_name = NODE_NAME, network_name = NETWORK_NAME)
 
 @app.route('/liftover/<genome>/<variant_id>')

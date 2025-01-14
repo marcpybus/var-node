@@ -1,13 +1,24 @@
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
+from flask_jwt_extended import get_jwt_identity
 from flask import Flask, request
+from flask import jsonify
+from cryptography.fernet import Fernet
 import os
 import json
 import sys
 import psycopg
+import base64
 from psycopg.rows import dict_row
 
 app = Flask( __name__ )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_port=1, x_proto=1, x_prefix=1)
+app.config["JWT_SECRET_KEY"] = os.environ['JWT_SECRET_KEY']  
+jwt = JWTManager(app)
+
+RESPONSE_ENCRYPTION = int(os.environ['RESPONSE_ENCRYPTION'])
+JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 
 user = os.environ['POSTGRES_USER']
 password = os.environ['POSTGRES_PASSWORD']
@@ -31,20 +42,42 @@ def get_genomes():
     conn.close()
     return result
 
+def encrypt_data(data):
+    if RESPONSE_ENCRYPTION:
+        code_bytes = JWT_SECRET_KEY.encode("utf-8")
+        key = base64.urlsafe_b64encode(code_bytes.ljust(32)[:32])
+        f = Fernet(key)
+        encrypted_data = f.encrypt(data.encode())
+        return encrypted_data
+    else:
+        return data
+
+def decrypt_data(encrypted_data):
+    if RESPONSE_ENCRYPTION:
+        code_bytes = JWT_SECRET_KEY.encode("utf-8")
+        key = base64.urlsafe_b64encode(code_bytes.ljust(32)[:32])
+        f = Fernet(key)
+        decrypted_data = f.decrypt(encrypted_data).decode()
+        return decrypted_data
+    else:
+        return encrypted_data
 
 # ROUTES
 @app.route('/info')
+@jwt_required()
 def show_node_data():
     output = {}
     output["database_genomes"] = get_genomes()
     output["error"] = "Ready"
-    return json.dumps(output)
+    return encrypt_data(json.dumps(output))
 
 @app.route('/<string:genome>/<string:variant_id>')
+@jwt_required()
 def show_variant_id_data(genome, variant_id):
-
-    requesting_node = request.headers.get("Requesting-Node")
-    print(requesting_node, file=sys.stderr)
+    
+    print(dict(request.headers), file=sys.stderr)
+    requesting_node = get_jwt_identity()
+    #print("requesting node: " + requesting_node, file=sys.stderr)
 
     try:
         conn = psycopg.connect( user=user, password=password, host="postgres", dbname=db, autocommit=True)
@@ -107,4 +140,4 @@ def show_variant_id_data(genome, variant_id):
     else:
         output["error"] = "Reference genome not found"
     #print(output, file=sys.stderr)
-    return json.dumps(output)
+    return encrypt_data(json.dumps(output))

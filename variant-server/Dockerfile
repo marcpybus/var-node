@@ -10,7 +10,7 @@ RUN apt update && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install flask[async] httpx "psycopg[binary,pool]"
+RUN pip install flask[async] flask-jwt-extended httpx cryptography "psycopg[binary,pool]"
 
 # RUN FLASK APP
 WORKDIR /app
