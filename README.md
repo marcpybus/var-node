@@ -32,17 +32,18 @@ docker compose logs -f
 ```
 * **ATTENTION:** Approximately 48 GB of genomic data needs to be downloaded and stored in `data/` the first time the **data-manager** container is run. It is possible to reduce disk space requirements by skipping the VEP annotation. See the "Automatic data download" section.
 * **IMPORTANT:** Wait until the data has been downloaded and the **data-manager** container has terminated itself. The data download process can be tracked in the container log. 
-* To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can use https://localhost/.
+* To access the front end, use your web browser with the server's IP or domain name. If installed locally, you can also use https://localhost/.
 * You must configure a username and password before accessing the front end. See the "Configuring the front end password" section.
 * Remove the whole `data/` directory to start the data configuration from scratch.
 
 ### Setup
+**IMPORTANT:** A secret key is used for JWT authetication of incoming request and encryption of response data. All members of the network have to use the same secret key for proper communication. You **MUST** use this command line or one equivalent to generate a long and secure key: `openssl rand -hex 64`
+- Add a secure secret key for data encryption. 
+    - JWT secret key: `JWT_SECRET_KEY="super-secret-key"`
 - Modify the following variables in `.env` file with the details of your node:
     - Name of the network: `NETWORK_NAME="Network name"`
     - Name of the node: `NODE_NAME="Node name"`
     - Email of contact:`CONTACT_EMAIL="contact@email.com"`
-- Add a secure secret key for JWT authetication of incoming requests. **IMPORTANT:** Use this command line `openssl rand -hex 64` to generate a long and secure key:
-    - JWT secret key: `JWT_SECRET_KEY="super-secret-key"`
 - The default installation comes with a self-signed certificate and key to encrypt all incoming requests. These files are located in `nginx/server-certificates/`. Feel free to modify them and use a properly configured certificate signed by your institution's CA. You should also change the default filenames in the `.env` file:
     - Server certificate: `SERVER_CERT_FILENAME="server.crt"` 
     - Server key: `SERVER_KEY_FILENAME="server.key"`
