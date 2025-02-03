@@ -10,7 +10,7 @@
 - Incoming variant requests from external nodes have to be routed to port 5000 of the server hosting the Docker setup.
 - Server SSL encryption is natively implemented. Authentication is performed using short-lived JWTs.
 
-![var-node-schema-3](https://github.com/user-attachments/assets/6ec463a9-8651-47f6-974c-d8c17f79d774)
+![var-node-schema-2 (1)](https://github.com/user-attachments/assets/ef8bd30b-0305-4cba-a44d-b0f3e54cc7d1)
 
 ### Installation and configuration
 #### Requeriments
